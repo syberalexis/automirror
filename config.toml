@@ -1,0 +1,3 @@
+[pullers]
+    [pullers.maven]
+        name = "Maven"
