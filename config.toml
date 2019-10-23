@@ -1,3 +1,9 @@
-[pullers]
-    [pullers.maven]
-        name = "Maven"
+[mirrors]
+    [mirrors.maven]
+        [mirrors.maven.puller]
+            name = "Maven"
+            pusher = "Maven"
+            config = "test"
+        [mirrors.maven.pusher]
+            name = "Maven"
+            config = "test"

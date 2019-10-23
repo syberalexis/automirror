@@ -1,36 +1,32 @@
 package main
 
 import (
+	"automirror/configs"
 	"automirror/pullers"
-	"github.com/BurntSushi/toml"
-	"io/ioutil"
-	"log"
 )
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
 func main() {
-	var config TomlConfig
-	tomlFile, err := ioutil.ReadFile("config.toml")
-	check(err)
-	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
-		log.Fatal(err)
+	configManager := configs.TomlConfigManager{File: "config.toml"}
+	config := configManager.Parse()
+
+	var pullerArray []pullers.Puller
+	for name, mirror := range config.Mirrors {
+		//var puller pullers.Puller
+		//puller = reflect.TypeOf(module.Puller).New()
+		println(name)
+		println(mirror.Name)
+		//reflect.ValueOf(&puller).MethodByName(module.Puller).Call([]reflect.Value{})
+		//reflect.TypeOf(&puller).MethodByName(module.Puller)
+		//puller = new(reflect.TypeOf(&puller))
+		pullerArray = append(pullerArray, pullers.Maven{
+			Url:              "https://repo1.maven.org/maven2",
+			MetadataFileName: "maven-metadata.xml",
+			DatabaseFile:     "maven.db",
+			Artifacts:        []pullers.Artifact{{"com.airbnb", "deeplinkdispatch", "4.0.0"}},
+		})
 	}
 
-	maven := pullers.Maven{Name: config.Pullers["maven"].Name}
-	maven.Pull()
-	goo := pullers.Go{}
-	goo.Pull()
-}
-
-type TomlConfig struct {
-	Pullers map[string]puller
-}
-
-type puller struct {
-	Name string
+	for _, puller := range pullerArray {
+		puller.Pull()
+	}
 }
