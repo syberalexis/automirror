@@ -1,9 +1,8 @@
 package pullers
 
 type Go struct {
-	Puller
 }
 
-func (g *Go) Pull() {
+func (Go) Pull() {
 	println("pull Go")
 }
