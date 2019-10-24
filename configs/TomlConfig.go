@@ -11,8 +11,10 @@ type mirror struct {
 }
 
 type puller struct {
-	Name   string
-	Config string
+	Name        string
+	Source      string
+	Destination string
+	Config      string
 }
 
 type pusher struct {

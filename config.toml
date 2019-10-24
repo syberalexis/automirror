@@ -2,8 +2,9 @@
     [mirrors.maven]
         [mirrors.maven.puller]
             name = "Maven"
-            pusher = "Maven"
-            config = "test"
+            source = "https://repo1.maven.org/maven2"
+            destination = "./tmp/maven"
+            config = "maven.toml"
         [mirrors.maven.pusher]
             name = "Maven"
             config = "test"

@@ -19,7 +19,8 @@ func main() {
 		//reflect.TypeOf(&puller).MethodByName(module.Puller)
 		//puller = new(reflect.TypeOf(&puller))
 		pullerArray = append(pullerArray, pullers.Maven{
-			Url:              "https://repo1.maven.org/maven2",
+			Url:              mirror.Puller.Source,
+			Folder:           mirror.Puller.Destination,
 			MetadataFileName: "maven-metadata.xml",
 			DatabaseFile:     "maven.db",
 			Artifacts:        []pullers.Artifact{{"com.airbnb", "deeplinkdispatch", "4.0.0"}},
