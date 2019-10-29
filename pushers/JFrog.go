@@ -8,13 +8,15 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
 type JFrog struct {
-	Url    string `toml:"url"`
-	ApiKey string `toml:"api_key"`
-	Source string `toml:"source"`
+	Url           string `toml:"url"`
+	ApiKey        string `toml:"api_key"`
+	Source        string `toml:"source"`
+	ExcludeRegexp string `toml:"exclude_regexp"`
 }
 
 func BuildJFrog(pusherConfig configs.PusherConfig) Pusher {
@@ -82,7 +84,10 @@ func (j JFrog) getFiles() []string {
 
 	err := filepath.Walk(j.Source, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
-			files = append(files, strings.TrimPrefix(path, j.Source+"/"))
+			matched, _ := regexp.MatchString(j.ExcludeRegexp, info.Name())
+			if !matched {
+				files = append(files, strings.TrimPrefix(path, j.Source+"/"))
+			}
 		}
 		return nil
 	})

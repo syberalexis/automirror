@@ -1,7 +1,6 @@
+timer = "30s"
 [mirrors]
     [mirrors.maven]
-        timer = 30
-        unit = "Second"
         [mirrors.maven.puller]
             name = "maven"
             source = "https://repo1.maven.org/maven2"

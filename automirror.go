@@ -8,15 +8,9 @@ import (
 	"github.com/BurntSushi/toml"
 	"io/ioutil"
 	"log"
+	"runtime"
 	"time"
 )
-
-func runThread(mirror mirrors.Mirror) {
-	log.Print("Mirror " + mirror.Name + " is running")
-	for range time.Tick(mirror.Timer * mirror.Unit) {
-		mirror.Run()
-	}
-}
 
 func main() {
 	// Read configuration
@@ -28,28 +22,31 @@ func main() {
 	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
 		log.Fatal(err)
 	}
+	timer, _ := time.ParseDuration(config.Timer)
 
 	// Build mirrors
 	var mirrorsArray []mirrors.Mirror
 	for name, mirror := range config.Mirrors {
 		puller := buildPuller(mirror.Puller)
 		pusher := buildPusher(mirror.Pusher)
-		unit, _ := time.ParseDuration(string(mirror.Unit))
 		mirrorsArray = append(
 			mirrorsArray,
 			mirrors.Mirror{
 				Name:   name,
 				Puller: puller,
 				Pusher: pusher,
-				Timer:  time.Duration(mirror.Timer),
-				Unit:   unit,
 			},
 		)
 	}
 
 	// Run mirrors
-	for _, mirror := range mirrorsArray {
-		go runThread(mirror)
+	for {
+		for _, mirror := range mirrorsArray {
+			log.Print(mirror.Name + " is running")
+			go mirror.Run()
+		}
+		runtime.Gosched()
+		time.Sleep(timer)
 	}
 }
 
