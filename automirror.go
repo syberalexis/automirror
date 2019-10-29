@@ -5,38 +5,68 @@ import (
 	"automirror/mirrors"
 	"automirror/pullers"
 	"automirror/pushers"
+	"github.com/BurntSushi/toml"
+	"io/ioutil"
+	"log"
+	"time"
 )
 
-func main() {
-	configManager := configs.TomlConfigManager{File: "config.toml"}
-	config := configManager.Parse()
+func runThread(mirror mirrors.Mirror) {
+	log.Print("Mirror " + mirror.Name + " is running")
+	for range time.Tick(mirror.Timer * mirror.Unit) {
+		mirror.Run()
+	}
+}
 
-	var mirrorsArray []mirrors.Mirror
-	for name, mirror := range config.Mirrors {
-		//var puller pullers.Puller
-		//puller = reflect.TypeOf(module.Puller).New()
-		println(name)
-		println(mirror.Name)
-		//reflect.ValueOf(&puller).MethodByName(module.Puller).Call([]reflect.Value{})
-		//reflect.TypeOf(&puller).MethodByName(module.Puller)
-		//puller = new(reflect.TypeOf(&puller))
-		mirrorsArray = append(mirrorsArray, mirrors.Mirror{
-			Puller: pullers.Maven{
-				Url:              mirror.Puller.Source,
-				Folder:           mirror.Puller.Destination,
-				MetadataFileName: "maven-metadata.xml",
-				DatabaseFile:     "maven.db",
-				Artifacts:        []pullers.Artifact{{"com.airbnb", "deeplinkdispatch", "4.0.0"}},
-			},
-			Pusher: pushers.JFrog{
-				Url:    "http://localhost:8081/artifactory/test",
-				ApiKey: "AKCp5e2qXnFDWrtw7hJHjjWxR6ei5tCQ3HCvdnSYop6Y8w1vK1GQeUEKeFqSePJXmpCHexcac",
-				Source: "tmp/maven",
-			},
-		})
+func main() {
+	// Read configuration
+	var config configs.TomlConfig
+	tomlFile, err := ioutil.ReadFile("config.toml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
+		log.Fatal(err)
 	}
 
+	// Build mirrors
+	var mirrorsArray []mirrors.Mirror
+	for name, mirror := range config.Mirrors {
+		puller := buildPuller(mirror.Puller)
+		pusher := buildPusher(mirror.Pusher)
+		unit, _ := time.ParseDuration(string(mirror.Unit))
+		mirrorsArray = append(
+			mirrorsArray,
+			mirrors.Mirror{
+				Name:   name,
+				Puller: puller,
+				Pusher: pusher,
+				Timer:  time.Duration(mirror.Timer),
+				Unit:   unit,
+			},
+		)
+	}
+
+	// Run mirrors
 	for _, mirror := range mirrorsArray {
-		mirror.Run()
+		go runThread(mirror)
+	}
+}
+
+func buildPuller(config configs.PullerConfig) pullers.Puller {
+	switch config.Name {
+	case "maven":
+		return pullers.BuildMaven(config)
+	default:
+		return nil
+	}
+}
+
+func buildPusher(config configs.PusherConfig) pushers.Pusher {
+	switch config.Name {
+	case "jfrog":
+		return pushers.BuildJFrog(config)
+	default:
+		return nil
 	}
 }

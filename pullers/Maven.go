@@ -1,9 +1,11 @@
 package pullers
 
 import (
+	"automirror/configs"
 	"automirror/utils"
 	"database/sql"
 	"encoding/xml"
+	"github.com/BurntSushi/toml"
 	"golang.org/x/net/html"
 	"io/ioutil"
 	"log"
@@ -17,15 +19,30 @@ import (
 type Maven struct {
 	Url              string
 	Folder           string
-	MetadataFileName string
-	DatabaseFile     string
-	Artifacts        []Artifact
+	MetadataFileName string     `toml:"metadata_file_name"`
+	DatabaseFile     string     `toml:"database_file"`
+	Artifacts        []Artifact `toml:"artifact"`
 }
 
 type Artifact struct {
 	Group          string
 	Id             string
-	MinimumVersion string
+	MinimumVersion string `toml:"minimum_version"`
+}
+
+func BuildMaven(pullerConfig configs.PullerConfig) Puller {
+	var config Maven
+	tomlFile, err := ioutil.ReadFile(pullerConfig.Config)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
+		log.Fatal(err)
+	}
+
+	config.Url = pullerConfig.Source
+	config.Folder = pullerConfig.Destination
+	return config
 }
 
 // Inherits public method to launch pulling process
