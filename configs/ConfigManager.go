@@ -7,24 +7,20 @@ import (
 )
 
 type ConfigManager interface {
-	Parse(file string) TomlConfig
+	Parse(config interface{})
 }
 
 type TomlConfigManager struct {
 	File string
 }
 
-func (t TomlConfigManager) Parse() TomlConfig {
-	var config TomlConfig
+func (t TomlConfigManager) Parse(config interface{}) {
 	tomlFile, err := ioutil.ReadFile(t.File)
 
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
 		log.Fatal(err)
 	}
-
-	return config
 }

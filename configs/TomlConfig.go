@@ -1,23 +1,24 @@
 package configs
 
 type TomlConfig struct {
-	Mirrors map[string]mirror
+	Mirrors map[string]MirrorConfig `toml:"mirrors"`
 }
 
-type mirror struct {
-	Name   string
-	Puller puller
-	Pusher pusher
+type MirrorConfig struct {
+	Puller PullerConfig `toml:"puller"`
+	Pusher PusherConfig `toml:"pusher"`
+	Timer  int
+	Unit   string
 }
 
-type puller struct {
+type PullerConfig struct {
 	Name        string
 	Source      string
 	Destination string
 	Config      string
 }
 
-type pusher struct {
+type PusherConfig struct {
 	Name   string
 	Config string
 }

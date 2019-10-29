@@ -1,10 +1,12 @@
 [mirrors]
     [mirrors.maven]
+        timer = 30
+        unit = "Second"
         [mirrors.maven.puller]
-            name = "Maven"
+            name = "maven"
             source = "https://repo1.maven.org/maven2"
             destination = "./tmp/maven"
             config = "maven.toml"
         [mirrors.maven.pusher]
-            name = "Maven"
-            config = "test"
+            name = "jfrog"
+            config = "jfrog.toml"
