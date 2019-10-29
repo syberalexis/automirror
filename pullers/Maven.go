@@ -2,14 +2,17 @@ package pullers
 
 import (
 	"automirror/configs"
-	"automirror/utils"
 	"database/sql"
 	"encoding/xml"
+	"fmt"
 	"github.com/BurntSushi/toml"
-	"golang.org/x/net/html"
+	"io"
+
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"os/exec"
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -20,6 +23,7 @@ type Maven struct {
 	Url              string
 	Folder           string
 	MetadataFileName string     `toml:"metadata_file_name"`
+	POMFile          string     `toml:"pom_file"`
 	DatabaseFile     string     `toml:"database_file"`
 	Artifacts        []Artifact `toml:"artifact"`
 }
@@ -59,8 +63,8 @@ func (m Maven) Pull() int {
 
 		if len(metadata.Versioning.Versions) != 0 {
 			for _, version := range metadata.Versioning.Versions[0].Versions {
-				if strings.Compare(version, artifact.MinimumVersion) >= 0 && !m.existsInDatabase(group, artifactId, version) {
-					m.getArtifactArchives(group, artifactId, version)
+				if strings.Compare(version, artifact.MinimumVersion) >= 0 && !m.existsInDatabase(artifact.Group, artifact.Id, version) {
+					m.downloadWithDependencies(artifact.Group, artifact.Id, version)
 					counter++
 				}
 			}
@@ -70,39 +74,48 @@ func (m Maven) Pull() int {
 	return counter
 }
 
-// Private method to get archive list of artifact to download
-func (m Maven) getArtifactArchives(group string, artifact string, version string) {
-	resp, err := http.Get(strings.Join([]string{m.Url, group, artifact, version}, "/"))
-	if err != nil {
-		log.Fatal(err)
+func (m Maven) createPOM(group string, artifact string, version string) {
+	project := project{
+		ModelVersion: "4.0.0",
+		GroupId:      "automirror",
+		ArtifactId:   "automirror",
+		Version:      "0.0.0",
+		Dependencies: []dependencies{
+			{
+				Dependencies: []dependency{
+					{
+						GroupId:    group,
+						ArtifactId: artifact,
+						Version:    version,
+					},
+				},
+			},
+		},
 	}
 
-	z := html.NewTokenizer(resp.Body)
-	for {
-		next := z.Next()
-		switch {
-		case next == html.ErrorToken:
-			// End of the document, we're done
-			return
-		case next == html.StartTagToken:
-			token := z.Token()
-			if token.Data == "a" && len(token.Attr) > 0 && token.Attr[0].Val != "../" {
-				m.download(group, artifact, version, token.Attr[0].Val)
-			}
-		}
+	file, _ := os.Create(m.POMFile)
+	xmlWriter := io.Writer(file)
+
+	enc := xml.NewEncoder(xmlWriter)
+	enc.Indent("  ", "    ")
+	if err := enc.Encode(project); err != nil {
+		fmt.Printf("error: %v\n", err)
+	}
+}
+
+// Private method to get archive list of artifact to download
+func (m Maven) downloadWithDependencies(group string, artifact string, version string) {
+	m.createPOM(group, artifact, version)
+
+	cmd := exec.Command("mvn", "clean", "compile", "dependency:sources", "dependency:resolve", "-f", m.POMFile, "-DdownloadSources=true", "-DdownloadJavadocs=true", "-Dmaven.repo.local="+m.Folder)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		log.Fatalf("cmd.Run() failed with %s\n", err)
 	}
 
 	m.insertIntoDatabase(group, artifact, version)
-}
-
-// Private method to download artifacts
-func (m Maven) download(group string, artifact string, version string, archive string) {
-	url := strings.Join([]string{m.Url, group, artifact, version, archive}, "/")
-	file := strings.Join([]string{m.Folder, group, artifact, version, archive}, "/")
-
-	if err := utils.FileDownloader(url, file); err != nil {
-		panic(err)
-	}
 }
 
 // Private method to check if version of artifact is already downloaded
@@ -181,4 +194,26 @@ type versioning struct {
 type versions struct {
 	XMLName  xml.Name `xml:"versions"`
 	Versions []string `xml:"version"`
+}
+
+// POM structure
+type project struct {
+	XMLName      xml.Name       `xml:"project"`
+	ModelVersion string         `xml:"modelVersion"`
+	GroupId      string         `xml:"groupId"`
+	ArtifactId   string         `xml:"artifactId"`
+	Version      string         `xml:"version"`
+	Dependencies []dependencies `xml:"dependencies"`
+}
+
+type dependencies struct {
+	XMLName      xml.Name     `xml:"dependencies"`
+	Dependencies []dependency `xml:"dependency"`
+}
+
+type dependency struct {
+	XMLName    xml.Name `xml:"dependency"`
+	GroupId    string   `xml:"groupId"`
+	ArtifactId string   `xml:"artifactId"`
+	Version    string   `xml:"version"`
 }

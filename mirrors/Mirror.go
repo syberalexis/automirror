@@ -18,5 +18,5 @@ type Mirror struct {
 func (m Mirror) Run() {
 	m.Puller.Pull()
 	m.Pusher.Push()
-	log.Print("Mirror " + m.Name + " was up to date !")
+	log.Print(m.Name + " is up to date !")
 }
