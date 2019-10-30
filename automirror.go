@@ -54,6 +54,8 @@ func buildPuller(config configs.PullerConfig) pullers.Puller {
 	switch config.Name {
 	case "maven":
 		return pullers.BuildMaven(config)
+	case "pip":
+		return pullers.BuildPython(config)
 	default:
 		return nil
 	}
