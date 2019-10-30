@@ -1,11 +1,20 @@
-timer = "30s"
+timer = "1h"
 [mirrors]
-    [mirrors.maven]
-        [mirrors.maven.puller]
-            name = "maven"
-            source = "https://repo1.maven.org/maven2"
-            destination = "./tmp/maven"
-            config = "maven.toml"
-        [mirrors.maven.pusher]
-            name = "jfrog"
-            config = "jfrog.toml"
+#    [mirrors.maven]
+#        [mirrors.maven.puller]
+#            name = "maven"
+#            source = "https://repo1.maven.org/maven2"
+#            destination = "./tmp/maven"
+#            config = "maven.toml"
+#        [mirrors.maven.pusher]
+#            name = "jfrog"
+#            config = "jfrog.toml"
+    [mirrors.pip]
+        [mirrors.pip.puller]
+            name = "pip"
+            source = "https://pypi.org"
+            destination = "./tmp/pip"
+            config = "python.toml"
+#        [mirrors.pip.pusher]
+#            name = "jfrog"
+#            config = "jfrog.toml"

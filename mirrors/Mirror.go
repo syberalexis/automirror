@@ -16,7 +16,11 @@ type Mirror struct {
 }
 
 func (m Mirror) Run() {
-	m.Puller.Pull()
-	m.Pusher.Push()
+	if m.Puller != nil {
+		m.Puller.Pull()
+	}
+	if m.Pusher != nil {
+		m.Pusher.Push()
+	}
 	log.Print(m.Name + " is up to date !")
 }

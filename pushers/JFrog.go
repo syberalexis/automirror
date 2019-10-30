@@ -2,6 +2,7 @@ package pushers
 
 import (
 	"automirror/configs"
+	"fmt"
 	"github.com/BurntSushi/toml"
 	"io/ioutil"
 	"log"
@@ -55,7 +56,7 @@ func (j JFrog) Push() {
 			}
 
 			if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-				log.Print(file + " successfully pushed !")
+				fmt.Printf("%s successfully pushed !\n", file)
 			} else {
 				log.Panic(resp.Status + " : Error when pushing " + file)
 			}
