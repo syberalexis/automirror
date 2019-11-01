@@ -1,20 +1,47 @@
 timer = "1h"
 [mirrors]
-#    [mirrors.maven]
-#        [mirrors.maven.puller]
-#            name = "maven"
-#            source = "https://repo1.maven.org/maven2"
-#            destination = "./tmp/maven"
-#            config = "maven.toml"
+    [mirrors.maven]
+        [mirrors.maven.puller]
+            name = "mvn"
+            source = "https://repo1.maven.org/maven2"
+            destination = "./tmp/maven"
+            config = "maven.toml"
 #        [mirrors.maven.pusher]
 #            name = "jfrog"
 #            config = "jfrog.toml"
-    [mirrors.pip]
-        [mirrors.pip.puller]
+    [mirrors.python]
+        [mirrors.python.puller]
             name = "pip"
             source = "https://pypi.org"
-            destination = "./tmp/pip"
+            destination = "./tmp/python"
             config = "python.toml"
-#        [mirrors.pip.pusher]
-#            name = "jfrog"
-#            config = "jfrog.toml"
+    [mirrors.debian]
+        [mirrors.debian.puller]
+            name = "apt"
+            source = "http://ftp.fr.debian.org/debian"
+            destination = "./tmp/debian"
+            config = "debian.toml"
+#    [mirrors.ubuntu]
+#        [mirrors.ubuntu.puller]
+#            name = "apt"
+#            source = "http://ftp.fr.debian.org/debian"
+#            destination = "./tmp/ubuntu"
+#            config = "ubuntu.toml"
+#    [mirrors.apt-puppet]
+#        [mirrors.apt-puppet.puller]
+#            name = "apt"
+#            source = "https://apt.puppet.com/"
+#            destination = "./tmp/apt-puppet"
+#            config = "apt-puppet.toml"
+#    [mirrors.centos]
+#        [mirrors.centos.puller]
+#            name = "yum"
+#            source = "http://ftp.fr.debian.org/debian"
+#            destination = "./tmp/centos"
+#            config = "centos.toml"
+#    [mirrors.go]
+#        [mirrors.go.puller]
+#            name = "go"
+#            source = ""
+#            destination = "./tmp/go"
+#            config = "go.toml"

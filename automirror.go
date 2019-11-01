@@ -12,10 +12,13 @@ import (
 	"time"
 )
 
+//var configFile = "/etc/automirror/config.toml"
+var configFile = "config.toml"
+
 func main() {
 	// Read configuration
 	var config configs.TomlConfig
-	tomlFile, err := ioutil.ReadFile("config.toml")
+	tomlFile, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,10 +55,12 @@ func main() {
 
 func buildPuller(config configs.PullerConfig) pullers.Puller {
 	switch config.Name {
-	case "maven":
+	case "mvn":
 		return pullers.BuildMaven(config)
 	case "pip":
 		return pullers.BuildPython(config)
+	case "apt":
+		return pullers.BuildApt(config)
 	default:
 		return nil
 	}
