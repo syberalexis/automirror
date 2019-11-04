@@ -1,6 +1,7 @@
-timer = "1h"
+log_file = "automirror.log"
 [mirrors]
     [mirrors.maven]
+#        timer = "30s"
         [mirrors.maven.puller]
             name = "mvn"
             source = "https://repo1.maven.org/maven2"
@@ -9,18 +10,18 @@ timer = "1h"
 #        [mirrors.maven.pusher]
 #            name = "jfrog"
 #            config = "jfrog.toml"
-    [mirrors.python]
-        [mirrors.python.puller]
-            name = "pip"
-            source = "https://pypi.org"
-            destination = "./tmp/python"
-            config = "python.toml"
-    [mirrors.debian]
-        [mirrors.debian.puller]
-            name = "apt"
-            source = "http://ftp.fr.debian.org/debian"
-            destination = "./tmp/debian"
-            config = "debian.toml"
+#    [mirrors.python]
+#        [mirrors.python.puller]
+#            name = "pip"
+#            source = "https://pypi.org"
+#            destination = "./tmp/python"
+#            config = "python.toml"
+#    [mirrors.debian]
+#        [mirrors.debian.puller]
+#            name = "apt"
+#            source = "http://ftp.fr.debian.org/debian"
+#            destination = "./tmp/debian"
+#            config = "debian.toml"
 #    [mirrors.ubuntu]
 #        [mirrors.ubuntu.puller]
 #            name = "apt"

@@ -32,7 +32,7 @@ func BuildJFrog(pusherConfig configs.PusherConfig) Pusher {
 	return config
 }
 
-func (j JFrog) Push() {
+func (j JFrog) Push() error {
 	files := j.getFiles()
 
 	for _, file := range files {
@@ -62,6 +62,7 @@ func (j JFrog) Push() {
 			}
 		}
 	}
+	return nil
 }
 
 func (j JFrog) fileExists(file string) bool {

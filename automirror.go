@@ -6,10 +6,10 @@ import (
 	"automirror/pullers"
 	"automirror/pushers"
 	"github.com/BurntSushi/toml"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
-	"runtime"
-	"time"
+	"os"
+	"sync"
 )
 
 //var configFile = "/etc/automirror/config.toml"
@@ -17,6 +17,33 @@ var configFile = "config.toml"
 
 func main() {
 	// Read configuration
+	config := readConfiguration()
+
+	// Logging
+	file, err := os.OpenFile(config.LogFile, os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	//log.SetOutput(file)
+	if config.LogFormat == "json" {
+		log.SetFormatter(&log.JSONFormatter{})
+	}
+	log.SetLevel(log.InfoLevel)
+
+	// Build mirrors
+	mirrorsArray := buildMirrors(config)
+
+	// Run mirrors
+	var wg sync.WaitGroup
+	for _, mirror := range mirrorsArray {
+		wg.Add(1)
+		go mirror.Start()
+	}
+	wg.Wait()
+}
+
+func readConfiguration() configs.TomlConfig {
 	var config configs.TomlConfig
 	tomlFile, err := ioutil.ReadFile(configFile)
 	if err != nil {
@@ -25,9 +52,10 @@ func main() {
 	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
 		log.Fatal(err)
 	}
-	timer, _ := time.ParseDuration(config.Timer)
+	return config
+}
 
-	// Build mirrors
+func buildMirrors(config configs.TomlConfig) []mirrors.Mirror {
 	var mirrorsArray []mirrors.Mirror
 	for name, mirror := range config.Mirrors {
 		puller := buildPuller(mirror.Puller)
@@ -38,19 +66,11 @@ func main() {
 				Name:   name,
 				Puller: puller,
 				Pusher: pusher,
+				Timer:  mirror.Timer,
 			},
 		)
 	}
-
-	// Run mirrors
-	for {
-		for _, mirror := range mirrorsArray {
-			log.Print(mirror.Name + " is running")
-			go mirror.Run()
-		}
-		runtime.Gosched()
-		time.Sleep(timer)
-	}
+	return mirrorsArray
 }
 
 func buildPuller(config configs.PullerConfig) pullers.Puller {
@@ -59,8 +79,8 @@ func buildPuller(config configs.PullerConfig) pullers.Puller {
 		return pullers.BuildMaven(config)
 	case "pip":
 		return pullers.BuildPython(config)
-	case "apt":
-		return pullers.BuildApt(config)
+	//case "apt":
+	//	return pullers.BuildApt(config)
 	default:
 		return nil
 	}

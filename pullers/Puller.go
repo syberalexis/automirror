@@ -1,5 +1,5 @@
 package pullers
 
 type Puller interface {
-	Pull() int
+	Pull() (int, error)
 }
