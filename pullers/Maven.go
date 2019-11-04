@@ -4,8 +4,8 @@ import (
 	"automirror/configs"
 	"automirror/utils"
 	"encoding/xml"
+	"fmt"
 	"github.com/BurntSushi/toml"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -32,19 +32,19 @@ type Artifact struct {
 	MinimumVersion string `toml:"minimum_version"`
 }
 
-func BuildMaven(pullerConfig configs.PullerConfig) Puller {
+func BuildMaven(pullerConfig configs.PullerConfig) (Puller, error) {
 	var config Maven
 	tomlFile, err := ioutil.ReadFile(pullerConfig.Config)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	config.Url = pullerConfig.Source
 	config.Folder = pullerConfig.Destination
-	return config
+	return config, nil
 }
 
 // Inherits public method to launch pulling process
@@ -68,7 +68,7 @@ func (m Maven) Pull() (int, error) {
 
 		if len(metadata.Versioning.Versions) != 0 {
 			for _, version := range metadata.Versioning.Versions[0].Versions {
-				isExistInDB, err := utils.ExistsInDatabase(m.DatabaseFile, "SELECT id FROM artifact WHERE `name` = ? AND version = ?", artifact.Group+"."+artifact.Id, version)
+				isExistInDB, err := utils.ExistsInDatabase(m.DatabaseFile, "SELECT id FROM artifact WHERE `name` = ? AND version = ?", fmt.Sprintf("%s.%s", group, artifact), version)
 				if err != nil {
 					return counter, err
 				}
@@ -83,6 +83,7 @@ func (m Maven) Pull() (int, error) {
 	return counter, nil
 }
 
+// private function to create the POM file
 func (m Maven) createPOM(group string, artifact string, version string) error {
 	project := project{
 		ModelVersion: "4.0.0",
@@ -115,17 +116,31 @@ func (m Maven) createPOM(group string, artifact string, version string) error {
 
 // Private method to get archive list of artifact to download
 func (m Maven) downloadWithDependencies(group string, artifact string, version string) error {
-	m.createPOM(group, artifact, version)
-
-	cmd := exec.Command("mvn", "clean", "compile", "dependency:sources", "dependency:resolve", "-f", m.POMFile, "-DdownloadSources=true", "-DdownloadJavadocs=true", "-Dmaven.repo.local="+m.Folder)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
+	err := m.createPOM(group, artifact, version)
 	if err != nil {
 		return err
 	}
 
-	return utils.InsertIntoDatabase(m.DatabaseFile, "INSERT INTO artifact (`name`, version) VALUES (?, ?)", group+"."+artifact, version)
+	cmd := exec.Command(
+		"mvn",
+		"clean",
+		"compile",
+		"dependency:sources",
+		"dependency:resolve",
+		"-f",
+		m.POMFile,
+		"-DdownloadSources=true",
+		"-DdownloadJavadocs=true",
+		fmt.Sprintf("-Dmaven.repo.local=%s", m.Folder),
+	)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return utils.InsertIntoDatabase(m.DatabaseFile, "INSERT INTO artifact (`name`, version) VALUES (?, ?)", fmt.Sprintf("%s.%s", group, artifact), version)
 }
 
 // Private method to read Maven Metadata File from Repo

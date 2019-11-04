@@ -4,7 +4,6 @@ import (
 	"automirror/pullers"
 	"automirror/pushers"
 	log "github.com/sirupsen/logrus"
-	"sync"
 	"time"
 )
 
@@ -19,16 +18,13 @@ type Mirror struct {
 func (m Mirror) Start() {
 	timer, _ := time.ParseDuration(m.Timer)
 	for {
-		var wg sync.WaitGroup
-		wg.Add(1)
-		go m.Run()
-		wg.Wait()
-		//runtime.Gosched()
+		m.Run()
 		if m.Timer == "" || timer == 0 {
 			break
 		}
 		time.Sleep(timer)
 	}
+	log.Infof("%s is stopped !", m.Name)
 }
 
 func (m Mirror) Run() {
