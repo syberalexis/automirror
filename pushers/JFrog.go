@@ -2,10 +2,9 @@ package pushers
 
 import (
 	"automirror/configs"
-	"fmt"
 	"github.com/BurntSushi/toml"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -20,68 +19,75 @@ type JFrog struct {
 	ExcludeRegexp string `toml:"exclude_regexp"`
 }
 
-func BuildJFrog(pusherConfig configs.PusherConfig) Pusher {
+func BuildJFrog(pusherConfig configs.PusherConfig) (Pusher, error) {
 	var config JFrog
 	tomlFile, err := ioutil.ReadFile(pusherConfig.Config)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	return config
+	return config, nil
 }
 
 func (j JFrog) Push() error {
-	files := j.getFiles()
+	files, err := j.getFiles()
+	if err != nil {
+		return err
+	}
 
 	for _, file := range files {
-		if !j.fileExists(file) {
+		isExist, err := j.fileExists(file)
+		if err != nil {
+			return err
+		}
+		if !isExist {
 			data, err := os.Open(j.Source + "/" + file)
 			defer data.Close()
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 
 			req, err := http.NewRequest("PUT", j.Url+"/"+file, data)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			req.Header.Set("X-JFrog-Art-Api", j.ApiKey)
 
 			client := &http.Client{}
 			resp, err := client.Do(req)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 
 			if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-				fmt.Printf("%s successfully pushed !\n", file)
+				log.Infof("%s successfully pushed !\n", file)
 			} else {
-				log.Panic(resp.Status + " : Error when pushing " + file)
+				log.Errorf("%s : Error when pushing %s", resp.Status, file)
 			}
 		}
 	}
 	return nil
 }
 
-func (j JFrog) fileExists(file string) bool {
+func (j JFrog) fileExists(file string) (bool, error) {
 	req, err := http.NewRequest("GET", j.Url+"/"+file, nil)
 	if err != nil {
-		log.Fatal(err)
+		return false, err
 	}
 	req.Header.Set("X-JFrog-Art-Api", j.ApiKey)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		return false, err
 	}
 
-	return resp.StatusCode == 200
+	return resp.StatusCode == 200, nil
 }
 
-func (j JFrog) getFiles() []string {
+func (j JFrog) getFiles() ([]string, error) {
 	var files []string
 
 	err := filepath.Walk(j.Source, func(path string, info os.FileInfo, err error) error {
@@ -94,8 +100,8 @@ func (j JFrog) getFiles() []string {
 		return nil
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	return files
+	return files, nil
 }

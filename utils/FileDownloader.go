@@ -16,26 +16,19 @@ func FileDownloader(url string, file string) error {
 
 	// Create the file
 	out, err := os.Create(file)
+	defer out.Close()
 	if err != nil {
 		return err
 	}
 
 	// Get the data
 	resp, err := http.Get(url)
+	defer resp.Body.Close()
 	if err != nil {
 		return err
 	}
 
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return err
-	}
-
-	err = out.Close()
-	if err != nil {
-		return err
-	}
-
-	return resp.Body.Close()
+	return err
 }

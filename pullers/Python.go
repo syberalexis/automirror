@@ -3,12 +3,11 @@ package pullers
 import (
 	"automirror/configs"
 	"automirror/utils"
-	"database/sql"
 	"fmt"
 	"github.com/BurntSushi/toml"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/html"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"regexp"
 	"strings"
@@ -21,28 +20,31 @@ type Python struct {
 	FileExtensions string `toml:"file_extensions"`
 }
 
-func BuildPython(pullerConfig configs.PullerConfig) Puller {
+func BuildPython(pullerConfig configs.PullerConfig) (Puller, error) {
 	var config Python
 	tomlFile, err := ioutil.ReadFile(pullerConfig.Config)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	config.Url = pullerConfig.Source
 	config.Folder = pullerConfig.Destination
-	return config
+	return config, nil
 }
 
 func (p Python) Pull() (int, error) {
-	p.initDatabase()
-	return p.readRepository("/simple/"), nil
+	err := utils.InitializeDatabase(p.DatabaseFile, "CREATE TABLE IF NOT EXISTS package (id INTEGER PRIMARY KEY, `name` TEXT)")
+	if err != nil {
+		return 0, err
+	}
+	return p.readRepository("/simple/")
 }
 
 // Private method to get archive list of artifact to download
-func (p Python) readRepository(subpath string) int {
+func (p Python) readRepository(subpath string) (int, error) {
 	counter := 0
 	resp, err := http.Get(p.Url + subpath)
 	if err != nil {
@@ -62,22 +64,33 @@ func (p Python) readRepository(subpath string) int {
 			token := z.Token()
 			if token.Data == "a" && len(token.Attr) > 0 && token.Attr[0].Val != "../" {
 				if strings.HasSuffix(token.Attr[0].Val, "/") {
-					counter += p.readRepository(token.Attr[0].Val)
+					count, err := p.readRepository(token.Attr[0].Val)
+					counter += count
+					if err != nil {
+						return counter, err
+					}
 				} else {
 					match := p.match(token.Attr[0].Val)
-					if match != "" && !p.existsInDatabase(match) {
-						p.download(subpath, token.Attr[0].Val)
+					isExist, err := utils.ExistsInDatabase(p.DatabaseFile, "SELECT id FROM package WHERE `name` = ?", match)
+					if err != nil {
+						return counter, err
+					}
+					if match != "" && !isExist {
+						err := p.download(subpath, token.Attr[0].Val)
+						if err != nil {
+							return counter, err
+						}
 						counter++
 					}
 				}
 			}
 		}
 	}
-	return counter
+	return counter, nil
 }
 
 func (p Python) match(url string) string {
-	re := regexp.MustCompile("^.*/(.+\\.(" + p.FileExtensions + " ))#?.*$")
+	re := regexp.MustCompile(fmt.Sprintf("^.*/(.+\\.(%s))#?.*$", p.FileExtensions))
 	match := re.FindStringSubmatch(url)
 	if match != nil {
 		return match[1]
@@ -86,54 +99,22 @@ func (p Python) match(url string) string {
 }
 
 // Private method to download artifacts
-func (p Python) download(subpath string, url string) {
+func (p Python) download(subpath string, url string) error {
 	match := p.match(url)
 	if match != "" {
 		file := strings.Join([]string{p.Folder, strings.Replace(subpath, "/simple", "", 1), match}, "")
 
 		if err := utils.FileDownloader(url, file); err != nil {
-			panic(err)
+			return err
 		}
-		fmt.Printf("%s successfully pulled !\n", file)
+		log.Infof("%s successfully pulled !\n", file)
 
-		p.insertIntoDatabase(match)
+		err := utils.InsertIntoDatabase(p.DatabaseFile, "INSERT INTO package (`name`) VALUES (?)", match)
+		if err != nil {
+			return err
+		}
 	} else {
-		log.Print(url + " not matched")
+		log.Debugf("%s not matched", url)
 	}
-}
-
-// Private method to check if version of artifact is already downloaded
-// Return a boolean
-func (p Python) existsInDatabase(archive string) bool {
-	database, _ := sql.Open("sqlite3", p.DatabaseFile+"?cache=shared&mode=memory")
-	statement, _ := database.Prepare("SELECT id FROM package WHERE `name` = ?")
-	rows, _ := statement.Query(archive)
-
-	return rows.Next()
-}
-
-// Private method to insert downloaded artifact info into Database
-func (p Python) insertIntoDatabase(archive string) {
-	database, _ := sql.Open("sqlite3", p.DatabaseFile+"?cache=shared&mode=memory")
-	tx, _ := database.Begin()
-	statement, _ := database.Prepare("INSERT INTO package (`name`) VALUES (?)")
-
-	_, err := statement.Exec(archive)
-	if err != nil {
-		tx.Rollback()
-		log.Fatal(err)
-	} else {
-		defer tx.Commit()
-	}
-}
-
-// Private method to initialize SQLite Database
-func (p Python) initDatabase() {
-	database, _ := sql.Open("sqlite3", p.DatabaseFile+"?cache=shared&mode=memory")
-	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS package (id INTEGER PRIMARY KEY, `name` TEXT)")
-
-	_, err := statement.Exec()
-	if err != nil {
-		log.Fatal(err)
-	}
+	return nil
 }

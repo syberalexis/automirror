@@ -20,12 +20,14 @@ func main() {
 	config := readConfiguration()
 
 	// Logging
-	file, err := os.OpenFile(config.LogFile, os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		log.Fatal(err)
+	if config.LogFile != "" {
+		file, err := os.OpenFile(config.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer file.Close()
+		log.SetOutput(file)
 	}
-	defer file.Close()
-	//log.SetOutput(file)
 	if config.LogFormat == "json" {
 		log.SetFormatter(&log.JSONFormatter{})
 	}
@@ -74,23 +76,41 @@ func buildMirrors(config configs.TomlConfig) []mirrors.Mirror {
 }
 
 func buildPuller(config configs.PullerConfig) pullers.Puller {
+	var puller pullers.Puller
+	var err error
+
 	switch config.Name {
 	case "mvn":
-		return pullers.BuildMaven(config)
+		puller, err = pullers.BuildMaven(config)
 	case "pip":
-		return pullers.BuildPython(config)
+		puller, err = pullers.BuildPython(config)
 	//case "apt":
 	//	return pullers.BuildApt(config)
 	default:
-		return nil
+		puller = nil
 	}
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return puller
 }
 
 func buildPusher(config configs.PusherConfig) pushers.Pusher {
+	var pusher pushers.Pusher
+	var err error
+
 	switch config.Name {
 	case "jfrog":
-		return pushers.BuildJFrog(config)
+		pusher, err = pushers.BuildJFrog(config)
 	default:
-		return nil
+		pusher = nil
 	}
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return pusher
 }

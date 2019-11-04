@@ -1,4 +1,5 @@
 log_file = "automirror.log"
+log_format = "json"
 [mirrors]
     [mirrors.maven]
 #        timer = "30s"
