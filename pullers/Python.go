@@ -15,9 +15,10 @@ import (
 )
 
 type Python struct {
-	Url          string
-	Folder       string
-	DatabaseFile string `toml:"database_file"`
+	Url            string
+	Folder         string
+	DatabaseFile   string `toml:"database_file"`
+	FileExtensions string `toml:"file_extensions"`
 }
 
 func BuildPython(pullerConfig configs.PullerConfig) Puller {
@@ -35,9 +36,9 @@ func BuildPython(pullerConfig configs.PullerConfig) Puller {
 	return config
 }
 
-func (p Python) Pull() int {
+func (p Python) Pull() (int, error) {
 	p.initDatabase()
-	return p.readRepository("/simple/")
+	return p.readRepository("/simple/"), nil
 }
 
 // Private method to get archive list of artifact to download
@@ -76,7 +77,7 @@ func (p Python) readRepository(subpath string) int {
 }
 
 func (p Python) match(url string) string {
-	re := regexp.MustCompile("^.*/(.+\\.(tar.gz|whl|zip|bz2|tar.bz2))#?.*$")
+	re := regexp.MustCompile("^.*/(.+\\.(" + p.FileExtensions + " ))#?.*$")
 	match := re.FindStringSubmatch(url)
 	if match != nil {
 		return match[1]
@@ -104,7 +105,7 @@ func (p Python) download(subpath string, url string) {
 // Private method to check if version of artifact is already downloaded
 // Return a boolean
 func (p Python) existsInDatabase(archive string) bool {
-	database, _ := sql.Open("sqlite3", p.DatabaseFile)
+	database, _ := sql.Open("sqlite3", p.DatabaseFile+"?cache=shared&mode=memory")
 	statement, _ := database.Prepare("SELECT id FROM package WHERE `name` = ?")
 	rows, _ := statement.Query(archive)
 
@@ -113,18 +114,22 @@ func (p Python) existsInDatabase(archive string) bool {
 
 // Private method to insert downloaded artifact info into Database
 func (p Python) insertIntoDatabase(archive string) {
-	database, _ := sql.Open("sqlite3", p.DatabaseFile)
+	database, _ := sql.Open("sqlite3", p.DatabaseFile+"?cache=shared&mode=memory")
+	tx, _ := database.Begin()
 	statement, _ := database.Prepare("INSERT INTO package (`name`) VALUES (?)")
 
 	_, err := statement.Exec(archive)
 	if err != nil {
+		tx.Rollback()
 		log.Fatal(err)
+	} else {
+		defer tx.Commit()
 	}
 }
 
 // Private method to initialize SQLite Database
 func (p Python) initDatabase() {
-	database, _ := sql.Open("sqlite3", p.DatabaseFile)
+	database, _ := sql.Open("sqlite3", p.DatabaseFile+"?cache=shared&mode=memory")
 	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS package (id INTEGER PRIMARY KEY, `name` TEXT)")
 
 	_, err := statement.Exec()

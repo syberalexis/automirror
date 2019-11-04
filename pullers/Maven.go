@@ -2,14 +2,12 @@ package pullers
 
 import (
 	"automirror/configs"
-	"database/sql"
+	"automirror/utils"
 	"encoding/xml"
-	"fmt"
 	"github.com/BurntSushi/toml"
+	log "github.com/sirupsen/logrus"
 	"io"
-
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -51,30 +49,41 @@ func BuildMaven(pullerConfig configs.PullerConfig) Puller {
 
 // Inherits public method to launch pulling process
 // Return number of downloaded artifacts
-func (m Maven) Pull() int {
-	replacer := strings.NewReplacer(".", "/")
-	m.initDatabase()
+func (m Maven) Pull() (int, error) {
 	counter := 0
+	replacer := strings.NewReplacer(".", "/")
+
+	err := utils.InitializeDatabase(m.DatabaseFile, "CREATE TABLE IF NOT EXISTS artifact (id INTEGER PRIMARY KEY, `name` TEXT, version TEXT)")
+	if err != nil {
+		return counter, err
+	}
 
 	for _, artifact := range m.Artifacts {
 		group := replacer.Replace(artifact.Group)
 		artifactId := replacer.Replace(artifact.Id)
-		metadata := m.readMetadata(group, artifactId)
+		metadata, err := m.readMetadata(group, artifactId)
+		if err != nil {
+			return counter, err
+		}
 
 		if len(metadata.Versioning.Versions) != 0 {
 			for _, version := range metadata.Versioning.Versions[0].Versions {
-				if strings.Compare(version, artifact.MinimumVersion) >= 0 && !m.existsInDatabase(artifact.Group, artifact.Id, version) {
-					m.downloadWithDependencies(artifact.Group, artifact.Id, version)
+				isExistInDB, err := utils.ExistsInDatabase(m.DatabaseFile, "SELECT id FROM artifact WHERE `name` = ? AND version = ?", artifact.Group+"."+artifact.Id, version)
+				if err != nil {
+					return counter, err
+				}
+				if strings.Compare(version, artifact.MinimumVersion) >= 0 && !isExistInDB {
+					err = m.downloadWithDependencies(artifact.Group, artifact.Id, version)
 					counter++
 				}
 			}
 		}
 	}
 
-	return counter
+	return counter, nil
 }
 
-func (m Maven) createPOM(group string, artifact string, version string) {
+func (m Maven) createPOM(group string, artifact string, version string) error {
 	project := project{
 		ModelVersion: "4.0.0",
 		GroupId:      "automirror",
@@ -93,18 +102,19 @@ func (m Maven) createPOM(group string, artifact string, version string) {
 		},
 	}
 
-	file, _ := os.Create(m.POMFile)
+	file, err := os.Create(m.POMFile)
+	if err != nil {
+		return err
+	}
 	xmlWriter := io.Writer(file)
 
 	enc := xml.NewEncoder(xmlWriter)
 	enc.Indent("  ", "    ")
-	if err := enc.Encode(project); err != nil {
-		fmt.Printf("error: %v\n", err)
-	}
+	return enc.Encode(project)
 }
 
 // Private method to get archive list of artifact to download
-func (m Maven) downloadWithDependencies(group string, artifact string, version string) {
+func (m Maven) downloadWithDependencies(group string, artifact string, version string) error {
 	m.createPOM(group, artifact, version)
 
 	cmd := exec.Command("mvn", "clean", "compile", "dependency:sources", "dependency:resolve", "-f", m.POMFile, "-DdownloadSources=true", "-DdownloadJavadocs=true", "-Dmaven.repo.local="+m.Folder)
@@ -112,67 +122,31 @@ func (m Maven) downloadWithDependencies(group string, artifact string, version s
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		log.Fatalf("cmd.Run() failed with %s\n", err)
+		return err
 	}
 
-	m.insertIntoDatabase(group, artifact, version)
-}
-
-// Private method to check if version of artifact is already downloaded
-// Return a boolean
-func (m Maven) existsInDatabase(group string, artifact string, version string) bool {
-	database, _ := sql.Open("sqlite3", m.DatabaseFile)
-	statement, _ := database.Prepare("SELECT id FROM artifact WHERE `name` = ? AND version = ?")
-	rows, _ := statement.Query(group+"."+artifact, version)
-
-	return rows.Next()
-}
-
-// Private method to insert downloaded artifact info into Database
-func (m Maven) insertIntoDatabase(group string, artifact string, version string) {
-	database, _ := sql.Open("sqlite3", m.DatabaseFile)
-	statement, _ := database.Prepare("INSERT INTO artifact (`name`, version) VALUES (?, ?)")
-
-	_, err := statement.Exec(group+"."+artifact, version)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-// Private method to initialize SQLite Database
-func (m Maven) initDatabase() {
-	database, _ := sql.Open("sqlite3", m.DatabaseFile)
-	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS artifact (id INTEGER PRIMARY KEY, `name` TEXT, version TEXT)")
-
-	_, err := statement.Exec()
-	if err != nil {
-		log.Fatal(err)
-	}
+	return utils.InsertIntoDatabase(m.DatabaseFile, "INSERT INTO artifact (`name`, version) VALUES (?, ?)", group+"."+artifact, version)
 }
 
 // Private method to read Maven Metadata File from Repo
 // One file per artifacts
 // Return the Metadata structure
-func (m Maven) readMetadata(group string, artifact string) metadata {
+func (m Maven) readMetadata(group string, artifact string) (metadata, error) {
 	var metadata metadata
 
 	resp, err := http.Get(strings.Join([]string{m.Url, group, artifact, m.MetadataFileName}, "/"))
 	if err != nil {
-		log.Fatal(err)
+		return metadata, err
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		return metadata, err
 	}
 
 	err = xml.Unmarshal(body, &metadata)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return metadata
+	return metadata, err
 }
 
 // Metadata Structure
