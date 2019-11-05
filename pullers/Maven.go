@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/BurntSushi/toml"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -53,7 +54,7 @@ func (m Maven) Pull() (int, error) {
 	counter := 0
 	replacer := strings.NewReplacer(".", "/")
 
-	err := utils.InitializeDatabase(m.DatabaseFile, "CREATE TABLE IF NOT EXISTS artifact (id INTEGER PRIMARY KEY, `name` TEXT, version TEXT)")
+	err := utils.InitializeDatabase(m.DatabaseFile)
 	if err != nil {
 		return counter, err
 	}
@@ -68,7 +69,7 @@ func (m Maven) Pull() (int, error) {
 
 		if len(metadata.Versioning.Versions) != 0 {
 			for _, version := range metadata.Versioning.Versions[0].Versions {
-				isExistInDB, err := utils.ExistsInDatabase(m.DatabaseFile, "SELECT id FROM artifact WHERE `name` = ? AND version = ?", fmt.Sprintf("%s.%s", group, artifact), version)
+				isExistInDB, err := utils.ExistsInDatabase(m.DatabaseFile, fmt.Sprintf("%s.%s:%s", artifact.Group, artifact.Id, version))
 				if err != nil {
 					return counter, err
 				}
@@ -133,14 +134,15 @@ func (m Maven) downloadWithDependencies(group string, artifact string, version s
 		"-DdownloadJavadocs=true",
 		fmt.Sprintf("-Dmaven.repo.local=%s", m.Folder),
 	)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+
+	cmd.Stdout = log.StandardLogger().Writer()
+	cmd.Stderr = log.StandardLogger().Writer()
 	err = cmd.Run()
 	if err != nil {
 		return err
 	}
 
-	return utils.InsertIntoDatabase(m.DatabaseFile, "INSERT INTO artifact (`name`, version) VALUES (?, ?)", fmt.Sprintf("%s.%s", group, artifact), version)
+	return utils.InsertIntoDatabase(m.DatabaseFile, fmt.Sprintf("%s.%s:%s", group, artifact, version))
 }
 
 // Private method to read Maven Metadata File from Repo

@@ -21,7 +21,7 @@ func main() {
 
 	// Logging
 	if config.LogFile != "" {
-		file, err := os.OpenFile(config.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+		file, err := os.OpenFile(config.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -91,7 +91,7 @@ func buildPuller(config configs.PullerConfig) pullers.Puller {
 	}
 
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 
 	return puller
@@ -109,7 +109,7 @@ func buildPusher(config configs.PusherConfig) pushers.Pusher {
 	}
 
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 
 	return pusher
