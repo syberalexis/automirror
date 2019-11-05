@@ -80,12 +80,16 @@ func buildPuller(config configs.PullerConfig) pullers.Puller {
 	var err error
 
 	switch config.Name {
+	case "apt":
+		puller, err = pullers.BuildApt(config)
+	case "deb":
+		puller, err = pullers.BuildDeb(config)
 	case "mvn":
 		puller, err = pullers.BuildMaven(config)
 	case "pip":
 		puller, err = pullers.BuildPython(config)
-	//case "apt":
-	//	return pullers.BuildApt(config)
+	case "rsync":
+		puller, err = pullers.BuildRsync(config)
 	default:
 		puller = nil
 	}
