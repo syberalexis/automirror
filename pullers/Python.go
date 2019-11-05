@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 )
 
 type Python struct {
@@ -36,7 +37,7 @@ func BuildPython(pullerConfig configs.PullerConfig) (Puller, error) {
 }
 
 func (p Python) Pull() (int, error) {
-	err := utils.InitializeDatabase(p.DatabaseFile, "CREATE TABLE IF NOT EXISTS package (id INTEGER PRIMARY KEY, `name` TEXT)")
+	err := utils.InitializeDatabase(p.DatabaseFile)
 	if err != nil {
 		return 0, err
 	}
@@ -48,7 +49,7 @@ func (p Python) readRepository(subpath string) (int, error) {
 	counter := 0
 	resp, err := http.Get(p.Url + subpath)
 	if err != nil {
-		log.Fatal(err)
+		return counter, err
 	}
 
 	z := html.NewTokenizer(resp.Body)
@@ -71,7 +72,7 @@ func (p Python) readRepository(subpath string) (int, error) {
 					}
 				} else {
 					match := p.match(token.Attr[0].Val)
-					isExist, err := utils.ExistsInDatabase(p.DatabaseFile, "SELECT id FROM package WHERE `name` = ?", match)
+					isExist, err := utils.ExistsInDatabase(p.DatabaseFile, match)
 					if err != nil {
 						return counter, err
 					}
@@ -81,6 +82,7 @@ func (p Python) readRepository(subpath string) (int, error) {
 							return counter, err
 						}
 						counter++
+						time.Sleep(time.Millisecond * 500)
 					}
 				}
 			}
@@ -109,7 +111,7 @@ func (p Python) download(subpath string, url string) error {
 		}
 		log.Infof("%s successfully pulled !\n", file)
 
-		err := utils.InsertIntoDatabase(p.DatabaseFile, "INSERT INTO package (`name`) VALUES (?)", match)
+		err := utils.InsertIntoDatabase(p.DatabaseFile, match)
 		if err != nil {
 			return err
 		}

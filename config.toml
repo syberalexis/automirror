@@ -11,12 +11,12 @@ log_format = "json"
 #        [mirrors.maven.pusher]
 #            name = "jfrog"
 #            config = "jfrog.toml"
-#    [mirrors.python]
-#        [mirrors.python.puller]
-#            name = "pip"
-#            source = "https://pypi.org"
-#            destination = "./tmp/python"
-#            config = "python.toml"
+    [mirrors.python]
+        [mirrors.python.puller]
+            name = "pip"
+            source = "https://pypi.org"
+            destination = "./tmp/python"
+            config = "python.toml"
 #    [mirrors.debian]
 #        [mirrors.debian.puller]
 #            name = "apt"
