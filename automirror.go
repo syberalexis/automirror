@@ -84,6 +84,8 @@ func buildPuller(config configs.PullerConfig) pullers.Puller {
 		puller, err = pullers.BuildApt(config)
 	case "deb":
 		puller, err = pullers.BuildDeb(config)
+	case "docker":
+		puller, err = pullers.BuildDocker(config)
 	case "mvn":
 		puller, err = pullers.BuildMaven(config)
 	case "pip":
