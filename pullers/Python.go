@@ -44,7 +44,7 @@ func (p Python) Pull() (int, error) {
 	return p.readRepository("/simple/")
 }
 
-// Private method to get archive list of artifact to download
+// Private method to get archive list of artifact to clone
 func (p Python) readRepository(subpath string) (int, error) {
 	counter := 0
 	resp, err := http.Get(p.Url + subpath)
@@ -100,7 +100,7 @@ func (p Python) match(url string) string {
 	return ""
 }
 
-// Private method to download artifacts
+// Private method to clone artifacts
 func (p Python) download(subpath string, url string) error {
 	match := p.match(url)
 	if match != "" {

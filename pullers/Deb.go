@@ -68,7 +68,7 @@ func (d Deb) Pull() (int, error) {
 func (d Deb) mkdir() error {
 	_, err := os.Stat(d.Folder)
 	if os.IsNotExist(err) {
-		return os.Mkdir(d.Folder, 0755)
+		return os.MkdirAll(d.Folder, 0755)
 	}
 	return err
 }
@@ -83,7 +83,7 @@ func (d Deb) count() (int, error) {
 	return len(files), nil
 }
 
-// Private method to download artifacts
+// Private method to clone artifacts
 func (d Deb) download() error {
 	var args []string
 

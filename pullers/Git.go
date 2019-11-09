@@ -10,14 +10,14 @@ import (
 	"strings"
 )
 
-type Rsync struct {
+type Git struct {
 	Url     string
 	Folder  string
 	Options string
 }
 
-func BuildRsync(pullerConfig configs.PullerConfig) (Puller, error) {
-	var config Rsync
+func BuildGit(pullerConfig configs.PullerConfig) (Puller, error) {
+	var config Git
 	tomlFile, err := ioutil.ReadFile(pullerConfig.Config)
 	if err != nil {
 		return nil, err
@@ -31,23 +31,23 @@ func BuildRsync(pullerConfig configs.PullerConfig) (Puller, error) {
 	return config, nil
 }
 
-func (r Rsync) Pull() (int, error) {
-	err := r.mkdir()
+func (g Git) Pull() (int, error) {
+	err := g.mkdir()
 	if err != nil {
 		return -1, err
 	}
 
-	before, err := r.count()
+	before, err := g.count()
 	if err != nil {
 		return before, err
 	}
 
-	err = r.synchronize()
+	err = g.clone()
 	if err != nil {
 		return -1, err
 	}
 
-	after, err := r.count()
+	after, err := g.count()
 	if err != nil {
 		return after, err
 	}
@@ -55,20 +55,20 @@ func (r Rsync) Pull() (int, error) {
 	return after - before, nil
 }
 
-func (r Rsync) Push() error {
-	return r.synchronize()
+func (g Git) Push() error {
+	return nil
 }
 
-func (r Rsync) mkdir() error {
-	_, err := os.Stat(r.Folder)
+func (g Git) mkdir() error {
+	_, err := os.Stat(g.Folder)
 	if os.IsNotExist(err) {
-		return os.MkdirAll(r.Folder, 0755)
+		return os.MkdirAll(g.Folder, 0755)
 	}
 	return err
 }
 
-func (r Rsync) count() (int, error) {
-	files, err := ioutil.ReadDir(r.Folder)
+func (g Git) count() (int, error) {
+	files, err := ioutil.ReadDir(g.Folder)
 
 	if err != nil {
 		return -1, err
@@ -78,17 +78,18 @@ func (r Rsync) count() (int, error) {
 }
 
 // Private method to clone artifacts
-func (r Rsync) synchronize() error {
+func (g Git) clone() error {
 	var args []string
 
-	if len(r.Options) > 0 {
-		args = append(args, strings.Fields(r.Options)...)
+	args = append(args, "clone")
+	args = append(args, "--mirror")
+	if len(g.Options) > 0 {
+		args = append(args, strings.Fields(g.Options)...)
 	}
+	args = append(args, g.Url)
+	args = append(args, g.Folder)
 
-	args = append(args, r.Url)
-	args = append(args, r.Folder)
-
-	cmd := exec.Command("rsync", args...)
+	cmd := exec.Command("git", args...)
 	cmd.Stdout = log.StandardLogger().Writer()
 	cmd.Stderr = log.StandardLogger().Writer()
 	return cmd.Run()

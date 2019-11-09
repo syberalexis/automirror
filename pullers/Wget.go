@@ -10,14 +10,14 @@ import (
 	"strings"
 )
 
-type Rsync struct {
+type Wget struct {
 	Url     string
 	Folder  string
 	Options string
 }
 
-func BuildRsync(pullerConfig configs.PullerConfig) (Puller, error) {
-	var config Rsync
+func BuildWget(pullerConfig configs.PullerConfig) (Puller, error) {
+	var config Wget
 	tomlFile, err := ioutil.ReadFile(pullerConfig.Config)
 	if err != nil {
 		return nil, err
@@ -31,23 +31,23 @@ func BuildRsync(pullerConfig configs.PullerConfig) (Puller, error) {
 	return config, nil
 }
 
-func (r Rsync) Pull() (int, error) {
-	err := r.mkdir()
+func (w Wget) Pull() (int, error) {
+	err := w.mkdir()
 	if err != nil {
 		return -1, err
 	}
 
-	before, err := r.count()
+	before, err := w.count()
 	if err != nil {
 		return before, err
 	}
 
-	err = r.synchronize()
+	err = w.download()
 	if err != nil {
 		return -1, err
 	}
 
-	after, err := r.count()
+	after, err := w.count()
 	if err != nil {
 		return after, err
 	}
@@ -55,20 +55,16 @@ func (r Rsync) Pull() (int, error) {
 	return after - before, nil
 }
 
-func (r Rsync) Push() error {
-	return r.synchronize()
-}
-
-func (r Rsync) mkdir() error {
-	_, err := os.Stat(r.Folder)
+func (w Wget) mkdir() error {
+	_, err := os.Stat(w.Folder)
 	if os.IsNotExist(err) {
-		return os.MkdirAll(r.Folder, 0755)
+		return os.MkdirAll(w.Folder, 0755)
 	}
 	return err
 }
 
-func (r Rsync) count() (int, error) {
-	files, err := ioutil.ReadDir(r.Folder)
+func (w Wget) count() (int, error) {
+	files, err := ioutil.ReadDir(w.Folder)
 
 	if err != nil {
 		return -1, err
@@ -78,17 +74,18 @@ func (r Rsync) count() (int, error) {
 }
 
 // Private method to clone artifacts
-func (r Rsync) synchronize() error {
+func (w Wget) download() error {
 	var args []string
 
-	if len(r.Options) > 0 {
-		args = append(args, strings.Fields(r.Options)...)
+	if len(w.Options) > 0 {
+		args = append(args, strings.Fields(w.Options)...)
 	}
 
-	args = append(args, r.Url)
-	args = append(args, r.Folder)
+	args = append(args, w.Url)
+	args = append(args, "-P")
+	args = append(args, w.Folder)
 
-	cmd := exec.Command("rsync", args...)
+	cmd := exec.Command("wget", args...)
 	cmd.Stdout = log.StandardLogger().Writer()
 	cmd.Stderr = log.StandardLogger().Writer()
 	return cmd.Run()

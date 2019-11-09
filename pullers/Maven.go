@@ -115,7 +115,7 @@ func (m Maven) createPOM(group string, artifact string, version string) error {
 	return enc.Encode(project)
 }
 
-// Private method to get archive list of artifact to download
+// Private method to get archive list of artifact to clone
 func (m Maven) downloadWithDependencies(group string, artifact string, version string) error {
 	err := m.createPOM(group, artifact, version)
 	if err != nil {
