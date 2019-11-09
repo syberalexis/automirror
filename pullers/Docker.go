@@ -141,7 +141,7 @@ func (d Docker) save(name string, tag string) error {
 func (d Docker) mkdir(folder string) error {
 	_, err := os.Stat(folder)
 	if os.IsNotExist(err) {
-		return os.Mkdir(folder, 0755)
+		return os.MkdirAll(folder, 0755)
 	}
 	return err
 }

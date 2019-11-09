@@ -86,12 +86,16 @@ func buildPuller(config configs.PullerConfig) pullers.Puller {
 		puller, err = pullers.BuildDeb(config)
 	case "docker":
 		puller, err = pullers.BuildDocker(config)
+	case "git":
+		puller, err = pullers.BuildGit(config)
 	case "mvn":
 		puller, err = pullers.BuildMaven(config)
 	case "pip":
 		puller, err = pullers.BuildPython(config)
 	case "rsync":
 		puller, err = pullers.BuildRsync(config)
+	case "wget":
+		puller, err = pullers.BuildWget(config)
 	default:
 		puller = nil
 	}
@@ -110,6 +114,8 @@ func buildPusher(config configs.PusherConfig) pushers.Pusher {
 	switch config.Name {
 	case "jfrog":
 		pusher, err = pushers.BuildJFrog(config)
+	//case "rsync":
+	//	pusher, err = both.BuildRsync(config)
 	default:
 		pusher = nil
 	}
