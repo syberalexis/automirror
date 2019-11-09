@@ -12,8 +12,7 @@ import (
 	"sync"
 )
 
-//var configFile = "/etc/automirror/config.toml"
-var configFile = "config.toml"
+var configFile = "/etc/automirror/config.toml"
 
 func main() {
 	// Read configuration
