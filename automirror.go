@@ -40,7 +40,10 @@ func main() {
 	var wg sync.WaitGroup
 	for _, mirror := range mirrorsArray {
 		wg.Add(1)
-		go mirror.Start()
+		go func(mirror mirrors.Mirror) {
+			defer wg.Done()
+			mirror.Start()
+		}(mirror)
 	}
 	wg.Wait()
 }
