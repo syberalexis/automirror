@@ -19,6 +19,7 @@ type Python struct {
 	Folder         string
 	DatabaseFile   string `toml:"database_file"`
 	FileExtensions string `toml:"file_extensions"`
+	SleepTimer     string `toml:""`
 }
 
 func BuildPython(pullerConfig configs.PullerConfig) (Puller, error) {
@@ -82,7 +83,11 @@ func (p Python) readRepository(subpath string) (int, error) {
 							return counter, err
 						}
 						counter++
-						time.Sleep(time.Millisecond * 500)
+						// Sleep if network or hardware can't support fastest
+						timer, _ := time.ParseDuration(p.SleepTimer)
+						if p.SleepTimer != "" || timer != 0 {
+							time.Sleep(timer)
+						}
 					}
 				}
 			}
