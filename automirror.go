@@ -83,8 +83,6 @@ func buildPuller(config configs.PullerConfig) pullers.Puller {
 	var err error
 
 	switch config.Name {
-	case "apt":
-		puller, err = pullers.BuildApt(config)
 	case "deb":
 		puller, err = pullers.BuildDeb(config)
 	case "docker":
