@@ -117,8 +117,8 @@ func buildPusher(config configs.PusherConfig) pushers.Pusher {
 	switch config.Name {
 	case "jfrog":
 		pusher, err = pushers.BuildJFrog(config)
-	//case "rsync":
-	//	pusher, err = both.BuildRsync(config)
+	case "rsync":
+		pusher, err = pullers.BuildRsyncPusher(config)
 	default:
 		pusher = nil
 	}

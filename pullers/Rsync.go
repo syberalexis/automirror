@@ -2,6 +2,7 @@ package pullers
 
 import (
 	"automirror/configs"
+	"automirror/pushers"
 	"github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -28,6 +29,19 @@ func BuildRsync(pullerConfig configs.PullerConfig) (Puller, error) {
 
 	config.Url = pullerConfig.Source
 	config.Folder = pullerConfig.Destination
+	return config, nil
+}
+
+func BuildRsyncPusher(pusherConfig configs.PusherConfig) (pushers.Pusher, error) {
+	var config Rsync
+	tomlFile, err := ioutil.ReadFile(pusherConfig.Config)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
+		return nil, err
+	}
+
 	return config, nil
 }
 
