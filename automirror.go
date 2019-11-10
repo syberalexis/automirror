@@ -1,12 +1,12 @@
 package main
 
 import (
-	"automirror/configs"
-	"automirror/mirrors"
-	"automirror/pullers"
-	"automirror/pushers"
 	"github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
+	"github.com/syberalexis/automirror/configs"
+	"github.com/syberalexis/automirror/mirrors"
+	"github.com/syberalexis/automirror/pullers"
+	"github.com/syberalexis/automirror/pushers"
 	"io/ioutil"
 	"os"
 	"sync"
