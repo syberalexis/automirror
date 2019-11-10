@@ -34,13 +34,13 @@ func (m Mirror) Run() {
 		if m.Puller != nil {
 			count, err := m.Puller.Pull()
 			if err != nil {
-				log.Errorf("The %s mirror stop to pull (%s elements). This is due to : %s", m.Name, count, err)
+				log.Errorf("The %s mirror stop to pull (%d elements). This is due to : %s", m.Name, count, err)
 			}
 		}
 		if m.Pusher != nil {
 			err := m.Pusher.Push()
 			if err != nil {
-				log.Errorf("The %s mirror stop to push. This is due to : %s", m.Name, nil)
+				log.Errorf("The %s mirror stop to push. This is due to : %s", m.Name, err)
 			}
 		}
 		m.IsRunning = false
