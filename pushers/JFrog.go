@@ -1,9 +1,9 @@
 package pushers
 
 import (
+	"automirror/configs"
 	"github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
-	"github.com/syberalexis/automirror/configs"
 	"io/ioutil"
 	"net/http"
 	"os"

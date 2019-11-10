@@ -1,12 +1,12 @@
 package pullers
 
 import (
+	"automirror/configs"
+	"automirror/utils"
 	"encoding/xml"
 	"fmt"
 	"github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
-	"github.com/syberalexis/automirror/configs"
-	"github.com/syberalexis/automirror/utils"
 	"io"
 	"io/ioutil"
 	"net/http"
