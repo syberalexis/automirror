@@ -7,7 +7,7 @@ dist:
 	mkdir $(DIST_FOLDER)
 
 assets: dist
-	GO111MODULE=$(GO111MODULE) GOOS= GOARCH= go generate -x -v $(GOOPTS)
+	GO111MODULE=$(GO111MODULE) GOOS= go generate -x -v $(GOOPTS)
 
 binary: assets
-	go build -o $(DIST_FOLDER)
+	go build -o $(DIST_FOLDER)/automirror_$(ARCH)
