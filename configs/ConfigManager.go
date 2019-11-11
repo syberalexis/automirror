@@ -3,24 +3,16 @@ package configs
 import (
 	"github.com/BurntSushi/toml"
 	"io/ioutil"
-	"log"
 )
 
-type ConfigManager interface {
-	Parse(config interface{})
-}
-
-type TomlConfigManager struct {
-	File string
-}
-
-func (t TomlConfigManager) Parse(config interface{}) {
-	tomlFile, err := ioutil.ReadFile(t.File)
-
+func Parse(config interface{}, configFile string) error {
+	tomlFile, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
-		log.Fatal(err)
+	if _, err := toml.Decode(string(tomlFile), config); err != nil {
+		return err
 	}
+
+	return nil
 }

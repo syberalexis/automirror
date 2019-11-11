@@ -1,1 +1,3 @@
+source = "rsync://rsync.alpinelinux.org/alpine/"
+destination = "./tmp/alpine"
 options = "-a -v"

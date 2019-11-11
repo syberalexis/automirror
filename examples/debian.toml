@@ -1,3 +1,5 @@
+host = "ftp.debian.org"
+destination = "./tmp/debian"
 dist = "stretch,stretch-updates,stretch-backports"
 arch = "amd64"
 section = "main,contrib,non-free,main/debian-installer"

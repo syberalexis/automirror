@@ -75,8 +75,8 @@ Configuration is write in TOML. To accept more types, it's might be developed.
 ### Automirror
 
  * log_file : the location file to write logs
- * log_format : only Native (Unix system) or json
- * debug : boolean to active debug mode (in a future release)
+ * log_format : text (default) or json
+ * log_level : the log level defined by logrus
  * mirrors : define activated mirrors in a map
  
 #### Mirror

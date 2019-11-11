@@ -2,52 +2,44 @@ package pullers
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
 	"github.com/syberalexis/automirror/configs"
-	"io/ioutil"
-	"os"
+	"github.com/syberalexis/automirror/utils"
 	"os/exec"
 	"strings"
 )
 
 type Deb struct {
-	Url     string
-	Folder  string
-	Dist    string
-	Arch    string
-	Section string
-	Root    string
-	Method  string
-	Keyring string
-	Cleanup bool
-	Source  bool
-	I18N    bool
-	Options string
+	Host        string
+	Destination string
+	Dist        string
+	Arch        string
+	Section     string
+	Root        string
+	Method      string
+	Keyring     string
+	Cleanup     bool
+	Source      bool
+	I18N        bool
+	Options     string
 }
 
-func BuildDeb(pullerConfig configs.PullerConfig) (Puller, error) {
-	var config Deb
-	tomlFile, err := ioutil.ReadFile(pullerConfig.Config)
+func NewDeb(config configs.EngineConfig) (interface{}, error) {
+	var deb Deb
+	err := configs.Parse(&deb, config.Config)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
-		return nil, err
-	}
-
-	config.Url = pullerConfig.Source
-	config.Folder = pullerConfig.Destination
-	return config, nil
+	return deb, nil
 }
 
 func (d Deb) Pull() (int, error) {
-	err := d.mkdir()
+	err := utils.Mkdir(d.Destination)
 	if err != nil {
 		return -1, err
 	}
 
-	before, err := d.count()
+	before, err := utils.Count(d.Destination)
 	if err != nil {
 		return before, err
 	}
@@ -57,7 +49,7 @@ func (d Deb) Pull() (int, error) {
 		return -1, err
 	}
 
-	after, err := d.count()
+	after, err := utils.Count(d.Destination)
 	if err != nil {
 		return after, err
 	}
@@ -65,30 +57,12 @@ func (d Deb) Pull() (int, error) {
 	return after - before, nil
 }
 
-func (d Deb) mkdir() error {
-	_, err := os.Stat(d.Folder)
-	if os.IsNotExist(err) {
-		return os.MkdirAll(d.Folder, 0755)
-	}
-	return err
-}
-
-func (d Deb) count() (int, error) {
-	files, err := ioutil.ReadDir(d.Folder)
-
-	if err != nil {
-		return -1, err
-	}
-
-	return len(files), nil
-}
-
 // Private method to clone artifacts
 func (d Deb) download() error {
 	var args []string
 
-	if len(d.Url) > 0 {
-		args = append(args, fmt.Sprintf("--host=%s", d.Url))
+	if len(d.Host) > 0 {
+		args = append(args, fmt.Sprintf("--host=%s", d.Host))
 	}
 
 	if len(d.Arch) > 0 {
@@ -133,7 +107,7 @@ func (d Deb) download() error {
 		args = append(args, strings.Fields(d.Options)...)
 	}
 
-	args = append(args, d.Folder)
+	args = append(args, d.Destination)
 
 	cmd := exec.Command("debmirror", args...)
 	cmd.Stdout = log.StandardLogger().Writer()

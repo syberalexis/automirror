@@ -2,12 +2,10 @@ package pullers
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
 	"github.com/syberalexis/automirror/configs"
 	"github.com/syberalexis/automirror/utils"
 	"golang.org/x/net/html"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
@@ -15,26 +13,20 @@ import (
 )
 
 type Python struct {
-	Url            string
-	Folder         string
+	Source         string
+	Destination    string
 	DatabaseFile   string `toml:"database_file"`
 	FileExtensions string `toml:"file_extensions"`
 	SleepTimer     string `toml:""`
 }
 
-func BuildPython(pullerConfig configs.PullerConfig) (Puller, error) {
-	var config Python
-	tomlFile, err := ioutil.ReadFile(pullerConfig.Config)
+func NewPython(config configs.EngineConfig) (interface{}, error) {
+	var python Python
+	err := configs.Parse(&python, config.Config)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
-		return nil, err
-	}
-
-	config.Url = pullerConfig.Source
-	config.Folder = pullerConfig.Destination
-	return config, nil
+	return python, nil
 }
 
 func (p Python) Pull() (int, error) {
@@ -48,7 +40,7 @@ func (p Python) Pull() (int, error) {
 // Private method to get archive list of artifact to clone
 func (p Python) readRepository(subpath string) (int, error) {
 	counter := 0
-	resp, err := http.Get(p.Url + subpath)
+	resp, err := http.Get(p.Source + subpath)
 	if err != nil {
 		return counter, err
 	}
@@ -109,7 +101,7 @@ func (p Python) match(url string) string {
 func (p Python) download(subpath string, url string) error {
 	match := p.match(url)
 	if match != "" {
-		file := strings.Join([]string{p.Folder, strings.Replace(subpath, "/simple", "", 1), match}, "")
+		file := strings.Join([]string{p.Destination, strings.Replace(subpath, "/simple", "", 1), match}, "")
 
 		if err := utils.FileDownloader(url, file); err != nil {
 			return err

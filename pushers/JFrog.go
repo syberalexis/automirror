@@ -1,10 +1,8 @@
 package pushers
 
 import (
-	"github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
 	"github.com/syberalexis/automirror/configs"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,22 +11,19 @@ import (
 )
 
 type JFrog struct {
-	Url           string `toml:"url"`
-	ApiKey        string `toml:"api_key"`
 	Source        string `toml:"source"`
+	Destination   string `toml:"destination"`
+	ApiKey        string `toml:"api_key"`
 	ExcludeRegexp string `toml:"exclude_regexp"`
 }
 
-func BuildJFrog(pusherConfig configs.PusherConfig) (Pusher, error) {
-	var config JFrog
-	tomlFile, err := ioutil.ReadFile(pusherConfig.Config)
+func NewJFrog(config configs.EngineConfig) (interface{}, error) {
+	var jFrog JFrog
+	err := configs.Parse(&jFrog, config.Config)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
-		return nil, err
-	}
-	return config, nil
+	return jFrog, nil
 }
 
 func (j JFrog) Push() error {
@@ -49,7 +44,7 @@ func (j JFrog) Push() error {
 				return err
 			}
 
-			req, err := http.NewRequest("PUT", j.Url+"/"+file, data)
+			req, err := http.NewRequest("PUT", j.Destination+"/"+file, data)
 			if err != nil {
 				return err
 			}
@@ -72,7 +67,7 @@ func (j JFrog) Push() error {
 }
 
 func (j JFrog) fileExists(file string) (bool, error) {
-	req, err := http.NewRequest("GET", j.Url+"/"+file, nil)
+	req, err := http.NewRequest("GET", j.Destination+"/"+file, nil)
 	if err != nil {
 		return false, err
 	}

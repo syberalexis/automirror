@@ -3,10 +3,9 @@ package pullers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/BurntSushi/toml"
 	"github.com/syberalexis/automirror/configs"
+	"github.com/syberalexis/automirror/utils"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -14,38 +13,32 @@ import (
 )
 
 type Docker struct {
-	Url     string
-	Folder  string
-	AuthUri string  `toml:"auth_uri"`
-	Images  []Image `toml:"images"`
+	Source      string
+	Destination string
+	AuthUri     string  `toml:"auth_uri"`
+	Images      []Image `toml:"images"`
 }
 
 type Image struct {
 	Name string `toml:"name"`
 }
 
-func BuildDocker(pullerConfig configs.PullerConfig) (Puller, error) {
-	var config Docker
-	tomlFile, err := ioutil.ReadFile(pullerConfig.Config)
+func NewDocker(config configs.EngineConfig) (interface{}, error) {
+	var docker Docker
+	err := configs.Parse(&docker, config.Config)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
-		log.Fatal(err)
-	}
-
-	config.Url = pullerConfig.Source
-	config.Folder = pullerConfig.Destination
-	return config, nil
+	return docker, nil
 }
 
 func (d Docker) Pull() (int, error) {
-	err := d.mkdir(d.Folder)
+	err := utils.Mkdir(d.Destination)
 	if err != nil {
 		return -1, err
 	}
 
-	before, err := d.count()
+	before, err := utils.Count(d.Destination)
 	if err != nil {
 		return before, err
 	}
@@ -57,7 +50,7 @@ func (d Docker) Pull() (int, error) {
 		}
 
 		for _, tag := range i.Tags {
-			err := d.mkdir(fmt.Sprintf("%s/%s", d.Folder, image.Name))
+			err := utils.Mkdir(fmt.Sprintf("%s/%s", d.Destination, image.Name))
 			if err != nil {
 				return -1, err
 			}
@@ -72,7 +65,7 @@ func (d Docker) Pull() (int, error) {
 		}
 	}
 
-	after, err := d.count()
+	after, err := utils.Count(d.Destination)
 	if err != nil {
 		return after, err
 	}
@@ -105,7 +98,7 @@ func (d Docker) getTags(name string) (image, error) {
 		return image, err
 	}
 
-	req, err := http.NewRequest("GET", strings.Join([]string{d.Url, "library", name, "tags", "list"}, "/"), nil)
+	req, err := http.NewRequest("GET", strings.Join([]string{d.Source, "library", name, "tags", "list"}, "/"), nil)
 	if err != nil {
 		return image, err
 	}
@@ -132,28 +125,10 @@ func (d Docker) pull(name string, tag string) error {
 }
 
 func (d Docker) save(name string, tag string) error {
-	cmd := exec.Command("docker", "save", name, "--output", fmt.Sprintf("%s/%s/%s", d.Folder, name, tag))
+	cmd := exec.Command("docker", "save", name, "--output", fmt.Sprintf("%s/%s/%s", d.Destination, name, tag))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
-}
-
-func (d Docker) mkdir(folder string) error {
-	_, err := os.Stat(folder)
-	if os.IsNotExist(err) {
-		return os.MkdirAll(folder, 0755)
-	}
-	return err
-}
-
-func (d Docker) count() (int, error) {
-	files, err := ioutil.ReadDir(d.Folder)
-
-	if err != nil {
-		return -1, err
-	}
-
-	return len(files), nil
 }
 
 type authentication struct {

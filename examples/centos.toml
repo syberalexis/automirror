@@ -1,1 +1,3 @@
+source = "rsync://ftp.pasteur.fr/mirrors/CentOS/"
+destination = "./tmp/centos"
 options = "-a -v"

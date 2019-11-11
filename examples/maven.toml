@@ -1,3 +1,5 @@
+source = "https://repo1.maven.org/maven2"
+destination = "./tmp/maven"
 metadata_file_name = "maven-metadata.xml"
 pom_file = "/tmp/pom.xml"
 database_file = "maven.db"
