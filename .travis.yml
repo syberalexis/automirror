@@ -10,10 +10,13 @@ go:
 
 go_import_path: github.com/syberalexis/automirror
 
+after_script:
+  - ls
+
 deploy:
   provider: releases
-  api_key: "GITHUB OAUTH TOKEN"
-  file: "FILE TO UPLOAD"
+  api_key: $GITHUB_TOKEN
+  file: automirror*
   skip_cleanup: true
   on:
     tags: true
