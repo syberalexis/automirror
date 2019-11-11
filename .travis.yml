@@ -10,6 +10,13 @@ go:
 
 go_import_path: github.com/syberalexis/automirror
 
+jobs:
+  include:
+    - stage: build
+      script: go build
+    - stage: test
+      script: go test
+
 after_script:
   - ls
 
