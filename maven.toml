@@ -1,8 +1,0 @@
-metadata_file_name = "maven-metadata.xml"
-pom_file = "/tmp/pom.xml"
-database_file = "maven.db"
-
-[[artifact]]
-    group = "org.springframework.boot"
-    id = "spring-boot"
-    minimum_version = "2.2.0.RELEASE"
