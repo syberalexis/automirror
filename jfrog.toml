@@ -1,4 +1,0 @@
-url = "http://localhost:8081/artifactory/test"
-api_key = "AKCp5e2qXnFDWrtw7hJHjjWxR6ei5tCQ3HCvdnSYop6Y8w1vK1GQeUEKeFqSePJXmpCHexcac"
-source = "tmp/maven"
-exclude_regexp = "(_remote.repositories)|.*\\.(sha1|md5)$"

@@ -1,7 +1,0 @@
-auth_uri = "https://auth.docker.io/token?service=registry.docker.io"
-[[images]]
-    name = "alpine"
-[[images]]
-    name = "centos"
-[[images]]
-    name = "ubuntu"
