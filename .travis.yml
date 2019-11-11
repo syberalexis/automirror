@@ -2,7 +2,6 @@ language: go
 
 os:
   - linux
-  - osx
 
 go:
   - 1.13.x
@@ -10,20 +9,10 @@ go:
 
 go_import_path: github.com/syberalexis/automirror
 
-jobs:
-  include:
-    - stage: build
-      script: go build
-    - stage: test
-      script: go test
-
-after_script:
-  - ls
-
 deploy:
   provider: releases
   api_key: $GITHUB_TOKEN
-  file: automirror*
+  file: dist/automirror*
   skip_cleanup: true
   on:
     tags: true
