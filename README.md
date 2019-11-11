@@ -1,9 +1,11 @@
 # Automirror
 
 [![Build Status](https://travis-ci.com/syberalexis/automirror.svg)][travis]
+[![Go Report Card](https://goreportcard.com/badge/github.com/syberalexis/automirror)](https://goreportcard.com/report/github.com/syberalexis/automirror)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3394/badge)](https://bestpractices.coreinfrastructure.org/projects/3394/badge)
 
 This Project is a POC to learn Golang. It's used to mirror different repositories
-in local to disconnected environment or embedded systems.
+in local for a disconnected environment or embedded systems.
 
 ## Concept
 
