@@ -1,9 +1,9 @@
 package mirrors
 
 import (
-	"automirror/pullers"
-	"automirror/pushers"
 	log "github.com/sirupsen/logrus"
+	"github.com/syberalexis/automirror/pullers"
+	"github.com/syberalexis/automirror/pushers"
 	"time"
 )
 

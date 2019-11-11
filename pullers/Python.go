@@ -1,11 +1,11 @@
 package pullers
 
 import (
-	"automirror/configs"
-	"automirror/utils"
 	"fmt"
 	"github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
+	"github.com/syberalexis/automirror/configs"
+	"github.com/syberalexis/automirror/utils"
 	"golang.org/x/net/html"
 	"io/ioutil"
 	"net/http"
