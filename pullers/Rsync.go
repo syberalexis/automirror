@@ -1,10 +1,10 @@
 package pullers
 
 import (
-	"automirror/configs"
-	"automirror/pushers"
 	"github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
+	"github.com/syberalexis/automirror/configs"
+	"github.com/syberalexis/automirror/pushers"
 	"io/ioutil"
 	"os"
 	"os/exec"

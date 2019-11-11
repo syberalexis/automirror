@@ -1,0 +1,4 @@
+database_file = "pip.db"
+#file_extensions = "whl"
+file_extensions = "tar.gz|whl|zip|bz2|tar.bz2"
+#sleep_timer = "500ms"

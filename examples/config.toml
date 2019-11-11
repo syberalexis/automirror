@@ -1,0 +1,91 @@
+log_file = "/var/log/automirror.log"
+log_format = "json"
+[mirrors]
+    [mirrors.maven]
+        timer = "24h"
+        [mirrors.maven.puller]
+            name = "mvn"
+            source = "https://repo1.maven.org/maven2"
+            destination = "./tmp/maven"
+            config = "maven.toml"
+#        [mirrors.maven.pusher]
+#            name = "jfrog"
+#            config = "jfrog.toml"
+    [mirrors.python]
+        timer = "24h"
+        [mirrors.python.puller]
+            name = "pip"
+            source = "https://pypi.org"
+            destination = "./tmp/python"
+            config = "python.toml"
+    [mirrors.debian]
+        timer = "24h"
+        [mirrors.debian.puller]
+            name = "deb"
+            source = "ftp.debian.org"
+            destination = "./tmp/debian"
+            config = "debian.toml"
+    [mirrors.ubuntu]
+        timer = "24h"
+        [mirrors.ubuntu.puller]
+            name = "deb"
+            source = "archive.ubuntu.com"
+            destination = "./tmp/ubuntu"
+            config = "ubuntu.toml"
+    [mirrors.apt-puppet]
+        timer = "24h"
+        [mirrors.apt-puppet.puller]
+            name = "rsync"
+            source = "rsync://rsync.puppet.com/packages/apt"
+            destination = "./tmp/apt-puppet"
+            config = "apt-puppet.toml"
+    [mirrors.docker]
+        timer = "24h"
+        [mirrors.docker.puller]
+            name = "docker"
+            source = "https://registry-1.docker.io/v2"
+            destination = "./tmp/docker"
+            config = "docker.toml"
+    [mirrors.centos]
+        timer = "24h"
+        [mirrors.centos.puller]
+            name = "rsync"
+            source = "rsync://ftp.pasteur.fr/mirrors/CentOS/"
+            destination = "./tmp/centos"
+            config = "centos.toml"
+    [mirrors.alpine]
+        timer = "24h"
+        [mirrors.alpine.puller]
+            name = "rsync"
+            source = "rsync://rsync.alpinelinux.org/alpine/"
+            destination = "./tmp/alpine"
+            config = "alpine.toml"
+    [mirrors.git]
+        timer = "24h"
+        [mirrors.git.puller]
+            name = "git"
+            source = "https://github.com/golang/go.git"
+            destination = "./tmp/git/go"
+            config = "git.toml"
+# ClamAV
+    [mirrors.clamav-main]
+        timer = "24h"
+        [mirrors.clamav-main.puller]
+            name = "wget"
+            source = "http://database.clamav.net/main.cvd"
+            destination = "./tmp/clamav"
+            config = "clamav.toml"
+    [mirrors.clamav-daily]
+        timer = "24h"
+        [mirrors.clamav-daily.puller]
+            name = "wget"
+            source = "http://database.clamav.net/daily.cvd"
+            destination = "./tmp/clamav"
+            config = "clamav.toml"
+    [mirrors.clamav-bytecode]
+        timer = "24h"
+        [mirrors.clamav-bytecode.puller]
+            name = "wget"
+            source = "http://database.clamav.net/bytecode.cvd"
+            destination = "./tmp/clamav"
+            config = "clamav.toml"
