@@ -15,7 +15,8 @@ go_import_path: github.com/syberalexis/automirror
 deploy:
   provider: releases
   api_key: ${GITHUB_TOKEN}
-  file: "dist/automirror*"
+  file_glob: true
+  file: dist/*
   skip_cleanup: true
   on:
     tags: true
