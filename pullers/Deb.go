@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// Deb object to pull a Debian based mirror with debmirror unix command
 type Deb struct {
 	Host        string
 	Destination string
@@ -24,6 +25,7 @@ type Deb struct {
 	Options     string
 }
 
+// NewDeb method to construct Deb
 func NewDeb(config configs.EngineConfig) (interface{}, error) {
 	var deb Deb
 	err := configs.Parse(&deb, config.Config)
@@ -33,6 +35,9 @@ func NewDeb(config configs.EngineConfig) (interface{}, error) {
 	return deb, nil
 }
 
+// Pull a Debian based repo
+// Inherits public method to launch pulling process
+// Return number of downloaded artifacts and error
 func (d Deb) Pull() (int, error) {
 	err := utils.Mkdir(d.Destination)
 	if err != nil {

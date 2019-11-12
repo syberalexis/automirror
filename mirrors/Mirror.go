@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Mirror structure to pull and push packages
 type Mirror struct {
 	Name      string
 	Puller    pullers.Puller
@@ -15,6 +16,7 @@ type Mirror struct {
 	IsRunning bool
 }
 
+// Start method to initialize scheduler
 func (m Mirror) Start() {
 	timer, _ := time.ParseDuration(m.Timer)
 	for {
@@ -27,6 +29,7 @@ func (m Mirror) Start() {
 	log.Infof("%s is stopped !", m.Name)
 }
 
+// Run method to pull and push if not already running
 func (m Mirror) Run() {
 	if !m.IsRunning {
 		log.Infof("%s is running !", m.Name)

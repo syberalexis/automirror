@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// Python object to pull python packages from pipy
 type Python struct {
 	Source         string
 	Destination    string
@@ -20,6 +21,7 @@ type Python struct {
 	SleepTimer     string `toml:""`
 }
 
+// NewPython method to construct Python
 func NewPython(config configs.EngineConfig) (interface{}, error) {
 	var python Python
 	err := configs.Parse(&python, config.Config)
@@ -29,6 +31,9 @@ func NewPython(config configs.EngineConfig) (interface{}, error) {
 	return python, nil
 }
 
+// Pull python packages
+// Inherits public method to launch pulling process
+// Return number of downloaded artifacts and error
 func (p Python) Pull() (int, error) {
 	return p.readRepository("/simple/")
 }

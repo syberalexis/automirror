@@ -14,7 +14,7 @@ import (
 	"strings"
 )
 
-// Object data structure
+// Maven object to pull Java artifacts from a Maven repo with mvn unix config
 type Maven struct {
 	Source           string
 	Destination      string
@@ -24,12 +24,14 @@ type Maven struct {
 	Artifacts        []Artifact `toml:"artifact"`
 }
 
+// Artifact to pull
 type Artifact struct {
 	Group          string
-	Id             string
+	ID             string
 	MinimumVersion string `toml:"minimum_version"`
 }
 
+// NewMaven method to construct Maven
 func NewMaven(config configs.EngineConfig) (interface{}, error) {
 	var maven Maven
 	err := configs.Parse(&maven, config.Config)
@@ -39,6 +41,7 @@ func NewMaven(config configs.EngineConfig) (interface{}, error) {
 	return maven, nil
 }
 
+// Pull artifacts from Maven repo
 // Inherits public method to launch pulling process
 // Return number of downloaded artifacts
 func (m Maven) Pull() (int, error) {
@@ -47,20 +50,23 @@ func (m Maven) Pull() (int, error) {
 
 	for _, artifact := range m.Artifacts {
 		group := replacer.Replace(artifact.Group)
-		artifactId := replacer.Replace(artifact.Id)
-		metadata, err := m.readMetadata(group, artifactId)
+		artifactID := replacer.Replace(artifact.ID)
+		metadata, err := m.readMetadata(group, artifactID)
 		if err != nil {
 			return counter, err
 		}
 
 		if len(metadata.Versioning.Versions) != 0 {
 			for _, version := range metadata.Versioning.Versions[0].Versions {
-				isExistInDB, err := utils.ExistsInDatabase(m.DatabaseFile, fmt.Sprintf("%s.%s:%s", artifact.Group, artifact.Id, version))
+				isExistInDB, err := utils.ExistsInDatabase(m.DatabaseFile, fmt.Sprintf("%s.%s:%s", artifact.Group, artifact.ID, version))
 				if err != nil {
 					return counter, err
 				}
 				if strings.Compare(version, artifact.MinimumVersion) >= 0 && !isExistInDB {
-					err = m.downloadWithDependencies(artifact.Group, artifact.Id, version)
+					err = m.downloadWithDependencies(artifact.Group, artifact.ID, version)
+					if err != nil {
+						return counter, err
+					}
 					counter++
 				}
 			}
@@ -74,15 +80,15 @@ func (m Maven) Pull() (int, error) {
 func (m Maven) createPOM(group string, artifact string, version string) error {
 	project := project{
 		ModelVersion: "4.0.0",
-		GroupId:      "automirror",
-		ArtifactId:   "automirror",
+		GroupID:      "automirror",
+		ArtifactID:   "automirror",
 		Version:      "0.0.0",
 		Dependencies: []dependencies{
 			{
 				Dependencies: []dependency{
 					{
-						GroupId:    group,
-						ArtifactId: artifact,
+						GroupID:    group,
+						ArtifactID: artifact,
 						Version:    version,
 					},
 				},
@@ -155,8 +161,8 @@ func (m Maven) readMetadata(group string, artifact string) (metadata, error) {
 // Metadata Structure
 type metadata struct {
 	XMLName    xml.Name   `xml:"metadata"`
-	GroupId    string     `xml:"groupId"`
-	ArtifactId string     `xml:"artifactId"`
+	GroupID    string     `xml:"groupId"`
+	ArtifactID string     `xml:"artifactId"`
 	Versioning versioning `xml:"versioning"`
 }
 
@@ -177,8 +183,8 @@ type versions struct {
 type project struct {
 	XMLName      xml.Name       `xml:"project"`
 	ModelVersion string         `xml:"modelVersion"`
-	GroupId      string         `xml:"groupId"`
-	ArtifactId   string         `xml:"artifactId"`
+	GroupID      string         `xml:"groupId"`
+	ArtifactID   string         `xml:"artifactId"`
 	Version      string         `xml:"version"`
 	Dependencies []dependencies `xml:"dependencies"`
 }
@@ -190,7 +196,7 @@ type dependencies struct {
 
 type dependency struct {
 	XMLName    xml.Name `xml:"dependency"`
-	GroupId    string   `xml:"groupId"`
-	ArtifactId string   `xml:"artifactId"`
+	GroupID    string   `xml:"groupId"`
+	ArtifactID string   `xml:"artifactId"`
 	Version    string   `xml:"version"`
 }

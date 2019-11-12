@@ -10,13 +10,15 @@ import (
 	"strings"
 )
 
+// JFrog object to push packages into an Artifactory using Web API
 type JFrog struct {
 	Source        string `toml:"source"`
 	Destination   string `toml:"destination"`
-	ApiKey        string `toml:"api_key"`
+	APIKey        string `toml:"api_key"`
 	ExcludeRegexp string `toml:"exclude_regexp"`
 }
 
+// NewJFrog method to construct JFrog
 func NewJFrog(config configs.EngineConfig) (interface{}, error) {
 	var jFrog JFrog
 	err := configs.Parse(&jFrog, config.Config)
@@ -26,6 +28,9 @@ func NewJFrog(config configs.EngineConfig) (interface{}, error) {
 	return jFrog, nil
 }
 
+// Push packages into an Artifactory
+// Inherits public method to launch pushing process
+// Return error
 func (j JFrog) Push() error {
 	files, err := j.getFiles()
 	if err != nil {
@@ -48,7 +53,7 @@ func (j JFrog) Push() error {
 			if err != nil {
 				return err
 			}
-			req.Header.Set("X-JFrog-Art-Api", j.ApiKey)
+			req.Header.Set("X-JFrog-Art-Api", j.APIKey)
 
 			client := &http.Client{}
 			resp, err := client.Do(req)
@@ -71,7 +76,7 @@ func (j JFrog) fileExists(file string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	req.Header.Set("X-JFrog-Art-Api", j.ApiKey)
+	req.Header.Set("X-JFrog-Art-Api", j.APIKey)
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

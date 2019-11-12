@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// Mkdir utils method to create a directory structure
 func Mkdir(folder string) error {
 	_, err := os.Stat(folder)
 	if os.IsNotExist(err) {
@@ -13,6 +14,7 @@ func Mkdir(folder string) error {
 	return err
 }
 
+// Count utils method to count a directory structure
 func Count(folder string) (int, error) {
 	files, err := ioutil.ReadDir(folder)
 

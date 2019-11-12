@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 )
 
+// Parse method to read TOML file and convert it into a struct
 func Parse(config interface{}, configFile string) error {
 	tomlFile, err := ioutil.ReadFile(configFile)
 	if err != nil {
