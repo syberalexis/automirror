@@ -1,3 +1,5 @@
+host = "archive.ubuntu.com"
+destination = "./tmp/ubuntu"
 dist = "disco,disco-security,disco-updates,disco-backports"
 arch = "amd64"
 section = "main,restricted,universe,multiverse"

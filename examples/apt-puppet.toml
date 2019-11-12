@@ -1,1 +1,3 @@
+source = "rsync://rsync.puppet.com/packages/apt"
+destination = "./tmp/apt-puppet"
 options = "-a -v"

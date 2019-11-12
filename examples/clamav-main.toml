@@ -1,0 +1,3 @@
+source = "http://database.clamav.net/main.cvd"
+destination = "./tmp/clamav"
+options = "-nH -nd -N"

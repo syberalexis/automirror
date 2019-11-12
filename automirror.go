@@ -1,22 +1,25 @@
 package main
 
 import (
-	"github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
+	"github.com/syberalexis/automirror/both"
 	"github.com/syberalexis/automirror/configs"
 	"github.com/syberalexis/automirror/mirrors"
 	"github.com/syberalexis/automirror/pullers"
 	"github.com/syberalexis/automirror/pushers"
-	"io/ioutil"
 	"os"
 	"sync"
 )
 
-var configFile = "/etc/automirror/config.toml"
+var configFile = "config.toml"
 
 func main() {
 	// Read configuration
-	config := readConfiguration()
+	var config configs.TomlConfig
+	err := configs.Parse(&config, configFile)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Logging
 	if config.LogFile != "" {
@@ -30,8 +33,15 @@ func main() {
 	if config.LogFormat == "json" {
 		log.SetFormatter(&log.JSONFormatter{})
 	}
-	log.SetLevel(log.InfoLevel)
-
+	if config.LogLevel != "" {
+		var level log.Level
+		ptr := &level
+		err := ptr.UnmarshalText([]byte(config.LogLevel))
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.SetLevel(level)
+	}
 	// Build mirrors
 	mirrorsArray := buildMirrors(config)
 
@@ -47,23 +57,19 @@ func main() {
 	wg.Wait()
 }
 
-func readConfiguration() configs.TomlConfig {
-	var config configs.TomlConfig
-	tomlFile, err := ioutil.ReadFile(configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
-		log.Fatal(err)
-	}
-	return config
-}
-
 func buildMirrors(config configs.TomlConfig) []mirrors.Mirror {
 	var mirrorsArray []mirrors.Mirror
 	for name, mirror := range config.Mirrors {
-		puller := buildPuller(mirror.Puller)
-		pusher := buildPusher(mirror.Pusher)
+		var puller pullers.Puller
+		var pusher pushers.Pusher
+
+		if engine := buildEngine(mirror.Puller); engine != nil {
+			puller = engine.(pullers.Puller)
+		}
+		if engine := buildEngine(mirror.Pusher); engine != nil {
+			pusher = engine.(pushers.Pusher)
+		}
+
 		mirrorsArray = append(
 			mirrorsArray,
 			mirrors.Mirror{
@@ -77,52 +83,34 @@ func buildMirrors(config configs.TomlConfig) []mirrors.Mirror {
 	return mirrorsArray
 }
 
-func buildPuller(config configs.PullerConfig) pullers.Puller {
-	var puller pullers.Puller
+func buildEngine(config configs.EngineConfig) interface{} {
+	var engine interface{}
 	var err error
 
 	switch config.Name {
 	case "deb":
-		puller, err = pullers.BuildDeb(config)
+		engine, err = pullers.NewDeb(config)
 	case "docker":
-		puller, err = pullers.BuildDocker(config)
+		engine, err = pullers.NewDocker(config)
 	case "git":
-		puller, err = pullers.BuildGit(config)
+		engine, err = both.NewGit(config)
 	case "mvn":
-		puller, err = pullers.BuildMaven(config)
+		engine, err = pullers.NewMaven(config)
 	case "pip":
-		puller, err = pullers.BuildPython(config)
+		engine, err = pullers.NewPython(config)
 	case "rsync":
-		puller, err = pullers.BuildRsync(config)
+		engine, err = both.NewRsync(config)
 	case "wget":
-		puller, err = pullers.BuildWget(config)
-	default:
-		puller = nil
-	}
-
-	if err != nil {
-		log.Error(err)
-	}
-
-	return puller
-}
-
-func buildPusher(config configs.PusherConfig) pushers.Pusher {
-	var pusher pushers.Pusher
-	var err error
-
-	switch config.Name {
+		engine, err = pullers.NewWget(config)
 	case "jfrog":
-		pusher, err = pushers.BuildJFrog(config)
-	case "rsync":
-		pusher, err = pullers.BuildRsyncPusher(config)
+		engine, err = pushers.NewJFrog(config)
 	default:
-		pusher = nil
+		engine = nil
 	}
 
 	if err != nil {
 		log.Error(err)
 	}
 
-	return pusher
+	return engine
 }

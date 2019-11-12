@@ -1,1 +1,3 @@
+source = "https://github.com/golang/go.git"
+destination = "./tmp/git/go"
 options = "--progress"

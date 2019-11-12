@@ -1,60 +1,40 @@
 package utils
 
 import (
-	"database/sql"
-	"fmt"
+	"github.com/boltdb/bolt"
 )
 
-func InitializeDatabase(filename string) error {
-	database, err := sql.Open("sqlite3", fmt.Sprintf("%s?cache=shared", filename))
-	defer database.Close()
-	if err != nil {
-		return err
-	}
-	statement, err := database.Prepare("CREATE TABLE IF NOT EXISTS package (id INTEGER PRIMARY KEY, `name` TEXT)")
-	defer statement.Close()
-	if err != nil {
-		return err
-	}
-
-	_, err = statement.Exec()
-	return err
-}
-
 func ExistsInDatabase(filename string, name string) (bool, error) {
-	database, err := sql.Open("sqlite3", fmt.Sprintf("%s?cache=shared", filename))
-	defer database.Close()
+	db, err := bolt.Open(filename, 0600, nil)
+	defer db.Close()
 	if err != nil {
 		return false, err
 	}
 
-	statement, err := database.Prepare("SELECT id FROM package WHERE `name` = ?")
-	defer statement.Close()
-	if err != nil {
-		return false, err
-	}
-
-	rows, err := statement.Query(name)
-	defer rows.Close()
-	if err != nil {
-		return false, err
-	}
-
-	return rows.Next(), nil
+	var data []byte
+	err = db.Update(func(tx *bolt.Tx) error {
+		bucket, err := tx.CreateBucketIfNotExists([]byte(filename))
+		if err != nil {
+			return err
+		}
+		data = bucket.Get([]byte(name))
+		return nil
+	})
+	return data != nil, err
 }
 
-func InsertIntoDatabase(filename string, name string) error {
-	database, err := sql.Open("sqlite3", fmt.Sprintf("%s?cache=shared", filename))
-	defer database.Close()
-	if err != nil {
-		return err
-	}
-	statement, err := database.Prepare("INSERT INTO package (`name`) VALUES (?)")
-	defer statement.Close()
+func InsertIntoDatabase(filename string, key string, value string) error {
+	db, err := bolt.Open(filename, 0600, nil)
+	defer db.Close()
 	if err != nil {
 		return err
 	}
 
-	_, err = statement.Exec(name)
-	return err
+	return db.Update(func(tx *bolt.Tx) error {
+		bucket, err := tx.CreateBucketIfNotExists([]byte(filename))
+		if err != nil {
+			return err
+		}
+		return bucket.Put([]byte(key), []byte(value))
+	})
 }

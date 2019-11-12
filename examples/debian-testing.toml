@@ -1,3 +1,5 @@
+host = "ftp.debian.org"
+destination = "./tmp/debian"
 dist = "testing"
 arch = "amd64"
 section = "main,contrib,non-free,main/debian-installer"

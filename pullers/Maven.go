@@ -3,7 +3,6 @@ package pullers
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
 	"github.com/syberalexis/automirror/configs"
 	"github.com/syberalexis/automirror/utils"
@@ -17,8 +16,8 @@ import (
 
 // Object data structure
 type Maven struct {
-	Url              string
-	Folder           string
+	Source           string
+	Destination      string
 	MetadataFileName string     `toml:"metadata_file_name"`
 	POMFile          string     `toml:"pom_file"`
 	DatabaseFile     string     `toml:"database_file"`
@@ -31,19 +30,13 @@ type Artifact struct {
 	MinimumVersion string `toml:"minimum_version"`
 }
 
-func BuildMaven(pullerConfig configs.PullerConfig) (Puller, error) {
-	var config Maven
-	tomlFile, err := ioutil.ReadFile(pullerConfig.Config)
+func NewMaven(config configs.EngineConfig) (interface{}, error) {
+	var maven Maven
+	err := configs.Parse(&maven, config.Config)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := toml.Decode(string(tomlFile), &config); err != nil {
-		return nil, err
-	}
-
-	config.Url = pullerConfig.Source
-	config.Folder = pullerConfig.Destination
-	return config, nil
+	return maven, nil
 }
 
 // Inherits public method to launch pulling process
@@ -51,11 +44,6 @@ func BuildMaven(pullerConfig configs.PullerConfig) (Puller, error) {
 func (m Maven) Pull() (int, error) {
 	counter := 0
 	replacer := strings.NewReplacer(".", "/")
-
-	err := utils.InitializeDatabase(m.DatabaseFile)
-	if err != nil {
-		return counter, err
-	}
 
 	for _, artifact := range m.Artifacts {
 		group := replacer.Replace(artifact.Group)
@@ -130,7 +118,7 @@ func (m Maven) downloadWithDependencies(group string, artifact string, version s
 		m.POMFile,
 		"-DdownloadSources=true",
 		"-DdownloadJavadocs=true",
-		fmt.Sprintf("-Dmaven.repo.local=%s", m.Folder),
+		fmt.Sprintf("-Dmaven.repo.local=%s", m.Destination),
 	)
 
 	cmd.Stdout = log.StandardLogger().Writer()
@@ -140,7 +128,7 @@ func (m Maven) downloadWithDependencies(group string, artifact string, version s
 		return err
 	}
 
-	return utils.InsertIntoDatabase(m.DatabaseFile, fmt.Sprintf("%s.%s:%s", group, artifact, version))
+	return utils.InsertIntoDatabase(m.DatabaseFile, fmt.Sprintf("%s.%s:%s", group, artifact, version), "true")
 }
 
 // Private method to read Maven Metadata File from Repo
@@ -149,7 +137,7 @@ func (m Maven) downloadWithDependencies(group string, artifact string, version s
 func (m Maven) readMetadata(group string, artifact string) (metadata, error) {
 	var metadata metadata
 
-	resp, err := http.Get(strings.Join([]string{m.Url, group, artifact, m.MetadataFileName}, "/"))
+	resp, err := http.Get(strings.Join([]string{m.Source, group, artifact, m.MetadataFileName}, "/"))
 	if err != nil {
 		return metadata, err
 	}
