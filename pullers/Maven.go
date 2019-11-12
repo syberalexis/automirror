@@ -45,11 +45,6 @@ func (m Maven) Pull() (int, error) {
 	counter := 0
 	replacer := strings.NewReplacer(".", "/")
 
-	err := utils.InitializeDatabase(m.DatabaseFile)
-	if err != nil {
-		return counter, err
-	}
-
 	for _, artifact := range m.Artifacts {
 		group := replacer.Replace(artifact.Group)
 		artifactId := replacer.Replace(artifact.Id)
@@ -133,7 +128,7 @@ func (m Maven) downloadWithDependencies(group string, artifact string, version s
 		return err
 	}
 
-	return utils.InsertIntoDatabase(m.DatabaseFile, fmt.Sprintf("%s.%s:%s", group, artifact, version))
+	return utils.InsertIntoDatabase(m.DatabaseFile, fmt.Sprintf("%s.%s:%s", group, artifact, version), "true")
 }
 
 // Private method to read Maven Metadata File from Repo

@@ -30,10 +30,6 @@ func NewPython(config configs.EngineConfig) (interface{}, error) {
 }
 
 func (p Python) Pull() (int, error) {
-	err := utils.InitializeDatabase(p.DatabaseFile)
-	if err != nil {
-		return 0, err
-	}
 	return p.readRepository("/simple/")
 }
 
@@ -108,7 +104,7 @@ func (p Python) download(subpath string, url string) error {
 		}
 		log.Infof("%s successfully pulled !\n", file)
 
-		err := utils.InsertIntoDatabase(p.DatabaseFile, match)
+		err := utils.InsertIntoDatabase(p.DatabaseFile, match, "true")
 		if err != nil {
 			return err
 		}
