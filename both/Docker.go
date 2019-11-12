@@ -128,6 +128,9 @@ func (d Docker) getTags(name string) (image, error) {
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return image, err
+	}
 
 	err = json.Unmarshal(body, &image)
 	return image, err

@@ -64,6 +64,9 @@ func (m Maven) Pull() (int, error) {
 				}
 				if strings.Compare(version, artifact.MinimumVersion) >= 0 && !isExistInDB {
 					err = m.downloadWithDependencies(artifact.Group, artifact.ID, version)
+					if err != nil {
+						return counter, err
+					}
 					counter++
 				}
 			}
