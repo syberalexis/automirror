@@ -1,6 +1,6 @@
 # Automirror
 
-[![Build Status](https://travis-ci.com/syberalexis/automirror.svg)][travis]
+[![Build Status](https://travis-ci.com/syberalexis/automirror.svg?branch=master)][travis]
 [![Go Report Card](https://goreportcard.com/badge/github.com/syberalexis/automirror)](https://goreportcard.com/report/github.com/syberalexis/automirror)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3394/badge)](https://bestpractices.coreinfrastructure.org/projects/3394/badge)
 
@@ -84,8 +84,6 @@ Configuration is write in TOML. To accept more types, it's might be developed.
  * timer : Schedule timer to pull and push
  * puller : Activated puller configuration
     * name : Puller name to print in logs
-    * source : Mirror source
-    * destination : Mirror destination
     * config : Specific config file
  * pusher : Activated pusher configuration
     * name : Pusher name to print in logs
@@ -111,6 +109,8 @@ Configuration is write in TOML. To accept more types, it's might be developed.
 
 #### Deb
 
+    host = "ftp.debian.org"
+    destination = "/tmp/debian"
     dist = "stretch,stretch-updates,stretch-backports"
     arch = "amd64"
     section = "main,contrib,non-free,main/debian-installer"
@@ -124,6 +124,8 @@ Configuration is write in TOML. To accept more types, it's might be developed.
 
 #### Docker
 
+    source = "https://registry-1.docker.io/v2"
+    destination = "/tmp/docker"
     auth_uri = "https://auth.docker.io/token?service=registry.docker.io"
     [[images]]
         name = "alpine"
@@ -134,10 +136,14 @@ Configuration is write in TOML. To accept more types, it's might be developed.
 
 #### Git
 
+    source = "https://github.com/golang/go.git"
+    destination = "/tmp/git/go"
     options = "--progress"
 
 #### Maven
 
+    source = "https://repo1.maven.org/maven2"
+    destination = "/tmp/maven"
     metadata_file_name = "maven-metadata.xml"
     pom_file = "/tmp/pom.xml"
     database_file = "maven.db"
@@ -149,25 +155,31 @@ Configuration is write in TOML. To accept more types, it's might be developed.
 
 #### Python
 
+    source = "https://pypi.org"
+    destination = "/tmp/python"
     database_file = "pip.db"
     file_extensions = "tar.gz|whl|zip|bz2|tar.bz2"
     sleep_timer = "500ms"
 
 #### Rsync
 
+    source = "rsync://rsync.alpinelinux.org/alpine/"
+    destination = "/tmp/alpine"
     options = "-a -v"
 
 #### Wget
 
+    source = "http://database.clamav.net/daily.cvd"
+    destination = "/tmp/clamav"
     options = "-nH -nd -N"
 
 ### Pushers
 
 #### JFrog
 
-    url = "http://localhost:8081/artifactory/test"
-    api_key = "AKCp5e2qXnFDWrtw7hJHjjWxR6ei5tCQ3HCvdnSYop6Y8w1vK1GQeUEKeFqSePJXmpCHexcac"
     source = "/tmp/maven"
+    destination = "http://localhost:8081/artifactory/test"
+    api_key = "AKCp5e2qXnFDWrtw7hJHjjWxR6ei5tCQ3HCvdnSYop6Y8w1vK1GQeUEKeFqSePJXmpCHexcac"
     exclude_regexp = "(_remote.repositories)|.*\\.(sha1|md5)$"
 
 ## Contributing
