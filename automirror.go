@@ -11,55 +11,14 @@ import (
 	"sync"
 )
 
-var configFile = "config.toml"
-
-func main() {
-	// Read configuration
-	var config configs.TomlConfig
-	err := configs.Parse(&config, configFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Logging
-	if config.LogFile != "" {
-		file, err := os.OpenFile(config.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer file.Close()
-		log.SetOutput(file)
-	}
-	if config.LogFormat == "json" {
-		log.SetFormatter(&log.JSONFormatter{})
-	}
-	if config.LogLevel != "" {
-		var level log.Level
-		ptr := &level
-		err := ptr.UnmarshalText([]byte(config.LogLevel))
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.SetLevel(level)
-	}
-	// Build mirrors
-	mirrorsArray := buildMirrors(config)
-
-	// Run mirrors
-	var wg sync.WaitGroup
-	for _, mirror := range mirrorsArray {
-		wg.Add(1)
-		go func(mirror mirrors.Mirror) {
-			defer wg.Done()
-			mirror.Start()
-		}(mirror)
-	}
-	wg.Wait()
+type automirror struct {
+	config  configs.TomlConfig
+	mirrors []mirrors.Mirror
 }
 
-func buildMirrors(config configs.TomlConfig) []mirrors.Mirror {
+func (a *automirror) buildMirrors() {
 	var mirrorsArray []mirrors.Mirror
-	for name, mirror := range config.Mirrors {
+	for name, mirror := range a.config.Mirrors {
 		var puller pullers.Puller
 		var pusher pushers.Pusher
 
@@ -80,7 +39,39 @@ func buildMirrors(config configs.TomlConfig) []mirrors.Mirror {
 			},
 		)
 	}
-	return mirrorsArray
+	a.mirrors = mirrorsArray
+}
+
+func initializeLogger(config configs.TomlConfig) {
+	if config.LogFile != "" {
+		file, err := os.OpenFile(config.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer file.Close()
+		log.SetOutput(file)
+	}
+	if config.LogFormat == "json" {
+		log.SetFormatter(&log.JSONFormatter{})
+	}
+	if config.LogLevel != "" {
+		var level log.Level
+		ptr := &level
+		err := ptr.UnmarshalText([]byte(config.LogLevel))
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.SetLevel(level)
+	}
+}
+
+func readConfiguration(configFile string) configs.TomlConfig {
+	var config configs.TomlConfig
+	err := configs.Parse(&config, configFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return config
 }
 
 func buildEngine(config configs.EngineConfig) interface{} {
@@ -113,4 +104,33 @@ func buildEngine(config configs.EngineConfig) interface{} {
 	}
 
 	return engine
+}
+
+func main() {
+	var configFile = "/etc/automirror/config.toml"
+
+	args := os.Args[1:]
+	if len(args) > 0 {
+		configFile = args[0]
+	}
+
+	// Read configuration
+	automirror := automirror{config: readConfiguration(configFile)}
+
+	// Logging
+	initializeLogger(automirror.config)
+
+	// Build mirrors
+	automirror.buildMirrors()
+
+	// Run mirrors
+	var wg sync.WaitGroup
+	for _, mirror := range automirror.mirrors {
+		wg.Add(1)
+		go func(mirror mirrors.Mirror) {
+			defer wg.Done()
+			mirror.Start()
+		}(mirror)
+	}
+	wg.Wait()
 }
