@@ -1,5 +1,6 @@
 package configs
 
+// TomlConfig structure from configuration file
 type TomlConfig struct {
 	LogFile   string                  `toml:"log_file"`
 	LogFormat string                  `toml:"log_format"`
@@ -7,24 +8,14 @@ type TomlConfig struct {
 	Mirrors   map[string]MirrorConfig `toml:"mirrors"`
 }
 
+// MirrorConfig structure from configuration file
 type MirrorConfig struct {
 	Timer  string
 	Puller EngineConfig `toml:"puller"`
 	Pusher EngineConfig `toml:"pusher"`
 }
 
-type PullerConfig struct {
-	Name        string
-	Source      string
-	Destination string
-	Config      string
-}
-
-type PusherConfig struct {
-	Name   string
-	Config string
-}
-
+// EngineConfig structure from configuration file
 type EngineConfig struct {
 	Name   string
 	Config string

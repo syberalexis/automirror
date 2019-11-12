@@ -8,12 +8,14 @@ import (
 	"strings"
 )
 
+// Wget object to pull web resource with wget unix command
 type Wget struct {
 	Source      string
 	Destination string
 	Options     string
 }
 
+// NewWget method to construct Wget
 func NewWget(config configs.EngineConfig) (interface{}, error) {
 	var wget Wget
 	err := configs.Parse(&wget, config.Config)
@@ -23,6 +25,9 @@ func NewWget(config configs.EngineConfig) (interface{}, error) {
 	return wget, nil
 }
 
+// Pull resource from url
+// Inherits public method to launch pulling process
+// Return number of downloaded artifacts and error
 func (w Wget) Pull() (int, error) {
 	err := utils.Mkdir(w.Destination)
 	if err != nil {

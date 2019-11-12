@@ -1,4 +1,4 @@
-package pullers
+package both
 
 import (
 	"encoding/json"
@@ -12,17 +12,20 @@ import (
 	"strings"
 )
 
+// Docker object to pull and push Docker images with docker unix command
 type Docker struct {
 	Source      string
 	Destination string
-	AuthUri     string  `toml:"auth_uri"`
+	AuthURI     string  `toml:"auth_uri"`
 	Images      []Image `toml:"images"`
 }
 
+// Image structure from specific configuration file
 type Image struct {
 	Name string `toml:"name"`
 }
 
+// NewDocker method to construct Docker
 func NewDocker(config configs.EngineConfig) (interface{}, error) {
 	var docker Docker
 	err := configs.Parse(&docker, config.Config)
@@ -32,6 +35,9 @@ func NewDocker(config configs.EngineConfig) (interface{}, error) {
 	return docker, nil
 }
 
+// Pull Docker images
+// Inherits public method to launch pulling process
+// Return number of downloaded artifacts and error
 func (d Docker) Pull() (int, error) {
 	err := utils.Mkdir(d.Destination)
 	if err != nil {
@@ -72,10 +78,19 @@ func (d Docker) Pull() (int, error) {
 
 	return after - before, nil
 }
+
+// Push Docker images
+// Inherits public method to launch pushing process
+// Return error
+func (d Docker) Push() error {
+	return nil
+}
+
+// private method to authenticate with anonymous on Docker Registry
 func (d Docker) authenticate(image string) (authentication, error) {
 	var authentication authentication
 
-	resp, err := http.Get(strings.Join([]string{d.AuthUri, fmt.Sprintf("scope=repository:library/%s:pull", image)}, "&"))
+	resp, err := http.Get(strings.Join([]string{d.AuthURI, fmt.Sprintf("scope=repository:library/%s:pull", image)}, "&"))
 	if err != nil {
 		return authentication, err
 	}
@@ -90,6 +105,7 @@ func (d Docker) authenticate(image string) (authentication, error) {
 	return authentication, err
 }
 
+// private method to get Tags from a Docker image
 func (d Docker) getTags(name string) (image, error) {
 	var image image
 
@@ -117,6 +133,7 @@ func (d Docker) getTags(name string) (image, error) {
 	return image, err
 }
 
+// private method to run docker pull unix command
 func (d Docker) pull(name string, tag string) error {
 	cmd := exec.Command("docker", "pull", fmt.Sprintf("%s:%s", name, tag))
 	cmd.Stdout = os.Stdout
@@ -124,6 +141,7 @@ func (d Docker) pull(name string, tag string) error {
 	return cmd.Run()
 }
 
+// private method to run docker save unix command
 func (d Docker) save(name string, tag string) error {
 	cmd := exec.Command("docker", "save", name, "--output", fmt.Sprintf("%s/%s/%s", d.Destination, name, tag))
 	cmd.Stdout = os.Stdout
@@ -131,6 +149,7 @@ func (d Docker) save(name string, tag string) error {
 	return cmd.Run()
 }
 
+// Structure returned by authentication request
 type authentication struct {
 	Token       string `json:"token"`
 	AccessToken string `json:"access_token"`

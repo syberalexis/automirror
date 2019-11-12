@@ -82,7 +82,7 @@ func buildEngine(config configs.EngineConfig) interface{} {
 	case "deb":
 		engine, err = pullers.NewDeb(config)
 	case "docker":
-		engine, err = pullers.NewDocker(config)
+		engine, err = both.NewDocker(config)
 	case "git":
 		engine, err = both.NewGit(config)
 	case "mvn":

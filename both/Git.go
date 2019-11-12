@@ -8,12 +8,14 @@ import (
 	"strings"
 )
 
+// Git object to pull and push with git unix command
 type Git struct {
 	Source      string
 	Destination string
 	Options     string
 }
 
+// NewGit method to construct Git
 func NewGit(config configs.EngineConfig) (interface{}, error) {
 	var git Git
 	err := configs.Parse(&git, config.Config)
@@ -23,6 +25,9 @@ func NewGit(config configs.EngineConfig) (interface{}, error) {
 	return git, nil
 }
 
+// Pull pull a git repo
+// Inherits public method to launch pulling process
+// Return number of downloaded artifacts and error
 func (g Git) Pull() (int, error) {
 	err := utils.Mkdir(g.Destination)
 	if err != nil {
@@ -47,6 +52,9 @@ func (g Git) Pull() (int, error) {
 	return after - before, nil
 }
 
+// Push a git repo
+// Inherits public method to launch pushing process
+// Return error
 func (g Git) Push() error {
 	return nil
 }

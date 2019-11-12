@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 )
 
+// FileDownloader method to download a file from an URI
 func FileDownloader(url string, file string) error {
 	// Create folders
 	err := os.MkdirAll(filepath.Dir(file), 0755)

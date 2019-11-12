@@ -4,6 +4,7 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+// ExistsInDatabase check if a package's name already exists into the database file
 func ExistsInDatabase(filename string, name string) (bool, error) {
 	db, err := bolt.Open(filename, 0600, nil)
 	defer db.Close()
@@ -23,6 +24,7 @@ func ExistsInDatabase(filename string, name string) (bool, error) {
 	return data != nil, err
 }
 
+// InsertIntoDatabase insert a package's name into the database file
 func InsertIntoDatabase(filename string, key string, value string) error {
 	db, err := bolt.Open(filename, 0600, nil)
 	defer db.Close()
