@@ -28,7 +28,7 @@ func NewGit(config configs.EngineConfig) (interface{}, error) {
 // Pull pull a git repo
 // Inherits public method to launch pulling process
 // Return number of downloaded artifacts and error
-func (g Git) Pull() (int, error) {
+func (g Git) Pull(log *log.Logger) (int, error) {
 	err := utils.Mkdir(g.Destination)
 	if err != nil {
 		return -1, err
@@ -39,7 +39,7 @@ func (g Git) Pull() (int, error) {
 		return before, err
 	}
 
-	err = g.clone()
+	err = g.clone(log)
 	if err != nil {
 		return -1, err
 	}
@@ -60,7 +60,7 @@ func (g Git) Push() error {
 }
 
 // Private method to clone artifacts
-func (g Git) clone() error {
+func (g Git) clone(log *log.Logger) error {
 	var args []string
 
 	args = append(args, "clone")
@@ -72,13 +72,13 @@ func (g Git) clone() error {
 	args = append(args, g.Destination)
 
 	cmd := exec.Command("git", args...)
-	cmd.Stdout = log.StandardLogger().Writer()
-	cmd.Stderr = log.StandardLogger().Writer()
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	return cmd.Run()
 }
 
 // Private method to push artifacts TODO
-func (g Git) push() error {
+func (g Git) push(log *log.Logger) error {
 	var args []string
 
 	args = append(args, "push")
@@ -90,7 +90,7 @@ func (g Git) push() error {
 	args = append(args, g.Destination)
 
 	cmd := exec.Command("git", args...)
-	cmd.Stdout = log.StandardLogger().Writer()
-	cmd.Stderr = log.StandardLogger().Writer()
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	return cmd.Run()
 }

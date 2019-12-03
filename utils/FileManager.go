@@ -3,6 +3,7 @@ package utils
 import (
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
 // Mkdir utils method to create a directory structure
@@ -23,4 +24,15 @@ func Count(folder string) (int, error) {
 	}
 
 	return len(files), nil
+}
+
+// Combine directory and filename
+func Combine(directory string, filename string) string {
+	if directory != "" {
+		if strings.HasSuffix(directory, "/") {
+			return directory + filename
+		}
+		return directory + "/" + filename
+	}
+	return filename
 }

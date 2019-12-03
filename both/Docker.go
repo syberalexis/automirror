@@ -3,6 +3,7 @@ package both
 import (
 	"encoding/json"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"github.com/syberalexis/automirror/configs"
 	"github.com/syberalexis/automirror/utils"
 	"io/ioutil"
@@ -38,7 +39,7 @@ func NewDocker(config configs.EngineConfig) (interface{}, error) {
 // Pull Docker images
 // Inherits public method to launch pulling process
 // Return number of downloaded artifacts and error
-func (d Docker) Pull() (int, error) {
+func (d Docker) Pull(log *log.Logger) (int, error) {
 	err := utils.Mkdir(d.Destination)
 	if err != nil {
 		return -1, err

@@ -28,7 +28,7 @@ func NewRsync(config configs.EngineConfig) (interface{}, error) {
 // Pull a remote folder to a local
 // Inherits public method to launch pulling process
 // Return number of downloaded artifacts and error
-func (r Rsync) Pull() (int, error) {
+func (r Rsync) Pull(log *log.Logger) (int, error) {
 	err := utils.Mkdir(r.Destination)
 	if err != nil {
 		return -1, err
@@ -39,7 +39,7 @@ func (r Rsync) Pull() (int, error) {
 		return before, err
 	}
 
-	err = r.synchronize()
+	err = r.synchronize(log)
 	if err != nil {
 		return -1, err
 	}
@@ -55,12 +55,12 @@ func (r Rsync) Pull() (int, error) {
 // Push a local folder to a remote
 // Inherits public method to launch pushing process
 // Return error
-func (r Rsync) Push() error {
-	return r.synchronize()
+func (r Rsync) Push(log *log.Logger) error {
+	return r.synchronize(log)
 }
 
 // Private method to clone artifacts
-func (r Rsync) synchronize() error {
+func (r Rsync) synchronize(log *log.Logger) error {
 	var args []string
 
 	if len(r.Options) > 0 {
@@ -71,7 +71,7 @@ func (r Rsync) synchronize() error {
 	args = append(args, r.Destination)
 
 	cmd := exec.Command("rsync", args...)
-	cmd.Stdout = log.StandardLogger().Writer()
-	cmd.Stderr = log.StandardLogger().Writer()
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	return cmd.Run()
 }
