@@ -34,12 +34,12 @@ func NewPython(config configs.EngineConfig) (interface{}, error) {
 // Pull python packages
 // Inherits public method to launch pulling process
 // Return number of downloaded artifacts and error
-func (p Python) Pull() (int, error) {
-	return p.readRepository("/simple/")
+func (p Python) Pull(log *log.Logger) (int, error) {
+	return p.readRepository("/simple/", log)
 }
 
 // Private method to get archive list of artifact to clone
-func (p Python) readRepository(subpath string) (int, error) {
+func (p Python) readRepository(subpath string, log *log.Logger) (int, error) {
 	counter := 0
 	resp, err := http.Get(p.Source + subpath)
 	if err != nil {
@@ -59,7 +59,7 @@ func (p Python) readRepository(subpath string) (int, error) {
 			token := z.Token()
 			if token.Data == "a" && len(token.Attr) > 0 && token.Attr[0].Val != "../" {
 				if strings.HasSuffix(token.Attr[0].Val, "/") {
-					count, err := p.readRepository(token.Attr[0].Val)
+					count, err := p.readRepository(token.Attr[0].Val, log)
 					counter += count
 					if err != nil {
 						return counter, err
@@ -71,7 +71,7 @@ func (p Python) readRepository(subpath string) (int, error) {
 						return counter, err
 					}
 					if match != "" && !isExist {
-						err := p.download(subpath, token.Attr[0].Val)
+						err := p.download(subpath, token.Attr[0].Val, log)
 						if err != nil {
 							return counter, err
 						}
@@ -99,7 +99,7 @@ func (p Python) match(url string) string {
 }
 
 // Private method to clone artifacts
-func (p Python) download(subpath string, url string) error {
+func (p Python) download(subpath string, url string, log *log.Logger) error {
 	match := p.match(url)
 	if match != "" {
 		file := strings.Join([]string{p.Destination, strings.Replace(subpath, "/simple", "", 1), match}, "")

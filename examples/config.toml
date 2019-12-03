@@ -1,67 +1,67 @@
-log_file = "/var/log/automirror.log"
+log_dir = "/var/log/"
 log_format = "json"
 [mirrors]
     [mirrors.maven]
         timer = "24h"
         [mirrors.maven.puller]
             name = "mvn"
-            config = "maven.toml"
+            config = "examples/maven.toml"
 #        [mirrors.maven.pusher]
 #            name = "jfrog"
-#            config = "jfrog.toml"
+#            config = "examples/jfrog.toml"
     [mirrors.python]
         timer = "24h"
         [mirrors.python.puller]
             name = "pip"
-            config = "python.toml"
+            config = "examples/python.toml"
     [mirrors.debian]
         timer = "24h"
         [mirrors.debian.puller]
             name = "deb"
-            config = "debian.toml"
+            config = "examples/debian.toml"
     [mirrors.ubuntu]
         timer = "24h"
         [mirrors.ubuntu.puller]
             name = "deb"
-            config = "ubuntu.toml"
+            config = "examples/ubuntu.toml"
     [mirrors.apt-puppet]
         timer = "24h"
         [mirrors.apt-puppet.puller]
             name = "rsync"
-            config = "apt-puppet.toml"
+            config = "examples/apt-puppet.toml"
     [mirrors.docker]
         timer = "24h"
         [mirrors.docker.puller]
             name = "docker"
-            config = "docker.toml"
+            config = "examples/docker.toml"
     [mirrors.centos]
         timer = "24h"
         [mirrors.centos.puller]
             name = "rsync"
-            config = "centos.toml"
+            config = "examples/centos.toml"
     [mirrors.alpine]
         timer = "24h"
         [mirrors.alpine.puller]
             name = "rsync"
-            config = "alpine.toml"
+            config = "examples/alpine.toml"
     [mirrors.git]
         timer = "24h"
         [mirrors.git.puller]
             name = "git"
-            config = "git.toml"
+            config = "examples/git.toml"
 # ClamAV
     [mirrors.clamav-main]
         timer = "24h"
         [mirrors.clamav-main.puller]
             name = "wget"
-            config = "clamav-main.toml"
+            config = "examples/clamav-main.toml"
     [mirrors.clamav-daily]
         timer = "24h"
         [mirrors.clamav-daily.puller]
             name = "wget"
-            config = "clamav-daily.toml"
+            config = "examples/clamav-daily.toml"
     [mirrors.clamav-bytecode]
         timer = "24h"
         [mirrors.clamav-bytecode.puller]
             name = "wget"
-            config = "clamav-bytecode.toml"
+            config = "examples/clamav-bytecode.toml"

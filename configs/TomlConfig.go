@@ -2,7 +2,7 @@ package configs
 
 // TomlConfig structure from configuration file
 type TomlConfig struct {
-	LogFile   string                  `toml:"log_file"`
+	LogDir    string                  `toml:"log_dir"`
 	LogFormat string                  `toml:"log_format"`
 	LogLevel  string                  `toml:"log_level"`
 	Mirrors   map[string]MirrorConfig `toml:"mirrors"`
