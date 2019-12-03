@@ -44,7 +44,7 @@ func NewMaven(config configs.EngineConfig) (interface{}, error) {
 // Pull artifacts from Maven repo
 // Inherits public method to launch pulling process
 // Return number of downloaded artifacts
-func (m Maven) Pull() (int, error) {
+func (m Maven) Pull(log *log.Logger) (int, error) {
 	counter := 0
 	replacer := strings.NewReplacer(".", "/")
 
@@ -63,7 +63,7 @@ func (m Maven) Pull() (int, error) {
 					return counter, err
 				}
 				if strings.Compare(version, artifact.MinimumVersion) >= 0 && !isExistInDB {
-					err = m.downloadWithDependencies(artifact.Group, artifact.ID, version)
+					err = m.downloadWithDependencies(artifact.Group, artifact.ID, version, log)
 					if err != nil {
 						return counter, err
 					}
@@ -108,7 +108,7 @@ func (m Maven) createPOM(group string, artifact string, version string) error {
 }
 
 // Private method to get archive list of artifact to clone
-func (m Maven) downloadWithDependencies(group string, artifact string, version string) error {
+func (m Maven) downloadWithDependencies(group string, artifact string, version string, log *log.Logger) error {
 	err := m.createPOM(group, artifact, version)
 	if err != nil {
 		return err
@@ -127,8 +127,8 @@ func (m Maven) downloadWithDependencies(group string, artifact string, version s
 		fmt.Sprintf("-Dmaven.repo.local=%s", m.Destination),
 	)
 
-	cmd.Stdout = log.StandardLogger().Writer()
-	cmd.Stderr = log.StandardLogger().Writer()
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	err = cmd.Run()
 	if err != nil {
 		return err

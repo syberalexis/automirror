@@ -28,7 +28,7 @@ func NewWget(config configs.EngineConfig) (interface{}, error) {
 // Pull resource from url
 // Inherits public method to launch pulling process
 // Return number of downloaded artifacts and error
-func (w Wget) Pull() (int, error) {
+func (w Wget) Pull(log *log.Logger) (int, error) {
 	err := utils.Mkdir(w.Destination)
 	if err != nil {
 		return -1, err
@@ -39,7 +39,7 @@ func (w Wget) Pull() (int, error) {
 		return before, err
 	}
 
-	err = w.download()
+	err = w.download(log)
 	if err != nil {
 		return -1, err
 	}
@@ -53,7 +53,7 @@ func (w Wget) Pull() (int, error) {
 }
 
 // Private method to clone artifacts
-func (w Wget) download() error {
+func (w Wget) download(log *log.Logger) error {
 	var args []string
 
 	if len(w.Options) > 0 {
@@ -65,7 +65,7 @@ func (w Wget) download() error {
 	args = append(args, w.Destination)
 
 	cmd := exec.Command("wget", args...)
-	cmd.Stdout = log.StandardLogger().Writer()
-	cmd.Stderr = log.StandardLogger().Writer()
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	return cmd.Run()
 }

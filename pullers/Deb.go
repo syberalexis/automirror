@@ -38,7 +38,7 @@ func NewDeb(config configs.EngineConfig) (interface{}, error) {
 // Pull a Debian based repo
 // Inherits public method to launch pulling process
 // Return number of downloaded artifacts and error
-func (d Deb) Pull() (int, error) {
+func (d Deb) Pull(log *log.Logger) (int, error) {
 	err := utils.Mkdir(d.Destination)
 	if err != nil {
 		return -1, err
@@ -49,7 +49,7 @@ func (d Deb) Pull() (int, error) {
 		return before, err
 	}
 
-	err = d.download()
+	err = d.download(log)
 	if err != nil {
 		return -1, err
 	}
@@ -63,7 +63,7 @@ func (d Deb) Pull() (int, error) {
 }
 
 // Private method to clone artifacts
-func (d Deb) download() error {
+func (d Deb) download(log *log.Logger) error {
 	var args []string
 
 	if len(d.Host) > 0 {
@@ -115,7 +115,7 @@ func (d Deb) download() error {
 	args = append(args, d.Destination)
 
 	cmd := exec.Command("debmirror", args...)
-	cmd.Stdout = log.StandardLogger().Writer()
-	cmd.Stderr = log.StandardLogger().Writer()
+	cmd.Stdout = log.Writer()
+	cmd.Stderr = log.Writer()
 	return cmd.Run()
 }

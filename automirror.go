@@ -7,6 +7,7 @@ import (
 	"github.com/syberalexis/automirror/mirrors"
 	"github.com/syberalexis/automirror/pullers"
 	"github.com/syberalexis/automirror/pushers"
+	"github.com/syberalexis/automirror/utils"
 	"os"
 	"sync"
 )
@@ -31,24 +32,30 @@ func (a *automirror) buildMirrors() {
 
 		mirrorsArray = append(
 			mirrorsArray,
-			mirrors.Mirror{
-				Name:   name,
-				Puller: puller,
-				Pusher: pusher,
-				Timer:  mirror.Timer,
-			},
+			mirrors.New(
+				name,
+				puller,
+				pusher,
+				mirror.Timer,
+				utils.LoggerInfo{
+					Directory: a.config.LogDir,
+					Filename:  name,
+					Format:    a.config.LogFormat,
+					Level:     a.config.LogLevel,
+				},
+			),
 		)
 	}
 	a.mirrors = mirrorsArray
 }
 
-func initializeLogger(config configs.TomlConfig) {
-	if config.LogFile != "" {
-		file, err := os.OpenFile(config.LogFile, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+func initializeLogger(config configs.TomlConfig) *os.File {
+	var file *os.File
+	if config.LogDir != "" {
+		file, err := os.OpenFile(utils.Combine(config.LogDir, "automirror.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
-		defer file.Close()
 		log.SetOutput(file)
 	}
 	if config.LogFormat == "json" {
@@ -63,6 +70,8 @@ func initializeLogger(config configs.TomlConfig) {
 		}
 		log.SetLevel(level)
 	}
+
+	return file
 }
 
 func readConfiguration(configFile string) configs.TomlConfig {
@@ -118,7 +127,9 @@ func main() {
 	automirror := automirror{config: readConfiguration(configFile)}
 
 	// Logging
-	initializeLogger(automirror.config)
+	file := initializeLogger(automirror.config)
+	defer file.Close()
+	defer utils.CloseLoggers()
 
 	// Build mirrors
 	automirror.buildMirrors()
