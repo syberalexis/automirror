@@ -2,9 +2,9 @@ package mirrors
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/syberalexis/automirror/pullers"
-	"github.com/syberalexis/automirror/pushers"
-	"github.com/syberalexis/automirror/utils"
+	"github.com/syberalexis/automirror/pkg/pullers"
+	"github.com/syberalexis/automirror/pkg/pushers"
+	"github.com/syberalexis/automirror/utils/logger"
 	"time"
 )
 
@@ -18,14 +18,14 @@ type Mirror struct {
 	logger    *log.Logger
 }
 
-func New(name string, puller pullers.Puller, pusher pushers.Pusher, timer string, loggerInfo utils.LoggerInfo) Mirror {
+func New(name string, puller pullers.Puller, pusher pushers.Pusher, timer string, loggerInfo logger.LoggerInfo) Mirror {
 	return Mirror{
 		Name:      name,
 		Puller:    puller,
 		Pusher:    pusher,
 		Timer:     timer,
 		IsRunning: false,
-		logger:    utils.NewLogger(loggerInfo),
+		logger:    logger.NewLogger(loggerInfo),
 	}
 }
 

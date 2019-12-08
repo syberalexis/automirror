@@ -2,8 +2,8 @@ package both
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/syberalexis/automirror/configs"
-	"github.com/syberalexis/automirror/utils"
+	"github.com/syberalexis/automirror/pkg/configs"
+	"github.com/syberalexis/automirror/utils/filesystem"
 	"os/exec"
 	"strings"
 )
@@ -29,12 +29,12 @@ func NewGit(config configs.EngineConfig) (interface{}, error) {
 // Inherits public method to launch pulling process
 // Return number of downloaded artifacts and error
 func (g Git) Pull(log *log.Logger) (int, error) {
-	err := utils.Mkdir(g.Destination)
+	err := filesystem.Mkdir(g.Destination)
 	if err != nil {
 		return -1, err
 	}
 
-	before, err := utils.Count(g.Destination)
+	before, err := filesystem.Count(g.Destination)
 	if err != nil {
 		return before, err
 	}
@@ -44,7 +44,7 @@ func (g Git) Pull(log *log.Logger) (int, error) {
 		return -1, err
 	}
 
-	after, err := utils.Count(g.Destination)
+	after, err := filesystem.Count(g.Destination)
 	if err != nil {
 		return after, err
 	}

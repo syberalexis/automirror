@@ -2,7 +2,7 @@ package pushers
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/syberalexis/automirror/configs"
+	"github.com/syberalexis/automirror/pkg/configs"
 	"net/http"
 	"os"
 	"path/filepath"

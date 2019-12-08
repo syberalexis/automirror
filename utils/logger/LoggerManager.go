@@ -1,7 +1,8 @@
-package utils
+package logger
 
 import (
 	log "github.com/sirupsen/logrus"
+	"github.com/syberalexis/automirror/utils/filesystem"
 	"os"
 )
 
@@ -17,7 +18,7 @@ type LoggerInfo struct {
 func NewLogger(loggerInfo LoggerInfo) *log.Logger {
 	logger := log.New()
 
-	filename := Combine(loggerInfo.Directory, loggerInfo.Filename)
+	filename := filesystem.Combine(loggerInfo.Directory, loggerInfo.Filename)
 	if filename != "" {
 		file, err := os.OpenFile(filename+".log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 		if err != nil {

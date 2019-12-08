@@ -3,8 +3,8 @@ package pullers
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/syberalexis/automirror/configs"
-	"github.com/syberalexis/automirror/utils"
+	"github.com/syberalexis/automirror/pkg/configs"
+	"github.com/syberalexis/automirror/utils/filesystem"
 	"os/exec"
 	"strings"
 )
@@ -39,12 +39,12 @@ func NewDeb(config configs.EngineConfig) (interface{}, error) {
 // Inherits public method to launch pulling process
 // Return number of downloaded artifacts and error
 func (d Deb) Pull(log *log.Logger) (int, error) {
-	err := utils.Mkdir(d.Destination)
+	err := filesystem.Mkdir(d.Destination)
 	if err != nil {
 		return -1, err
 	}
 
-	before, err := utils.Count(d.Destination)
+	before, err := filesystem.Count(d.Destination)
 	if err != nil {
 		return before, err
 	}
@@ -54,7 +54,7 @@ func (d Deb) Pull(log *log.Logger) (int, error) {
 		return -1, err
 	}
 
-	after, err := utils.Count(d.Destination)
+	after, err := filesystem.Count(d.Destination)
 	if err != nil {
 		return after, err
 	}

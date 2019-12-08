@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/syberalexis/automirror/configs"
-	"github.com/syberalexis/automirror/utils"
+	"github.com/syberalexis/automirror/pkg/configs"
+	"github.com/syberalexis/automirror/utils/filesystem"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -40,12 +40,12 @@ func NewDocker(config configs.EngineConfig) (interface{}, error) {
 // Inherits public method to launch pulling process
 // Return number of downloaded artifacts and error
 func (d Docker) Pull(log *log.Logger) (int, error) {
-	err := utils.Mkdir(d.Destination)
+	err := filesystem.Mkdir(d.Destination)
 	if err != nil {
 		return -1, err
 	}
 
-	before, err := utils.Count(d.Destination)
+	before, err := filesystem.Count(d.Destination)
 	if err != nil {
 		return before, err
 	}
@@ -57,7 +57,7 @@ func (d Docker) Pull(log *log.Logger) (int, error) {
 		}
 
 		for _, tag := range i.Tags {
-			err := utils.Mkdir(fmt.Sprintf("%s/%s", d.Destination, image.Name))
+			err := filesystem.Mkdir(fmt.Sprintf("%s/%s", d.Destination, image.Name))
 			if err != nil {
 				return -1, err
 			}
@@ -72,7 +72,7 @@ func (d Docker) Pull(log *log.Logger) (int, error) {
 		}
 	}
 
-	after, err := utils.Count(d.Destination)
+	after, err := filesystem.Count(d.Destination)
 	if err != nil {
 		return after, err
 	}

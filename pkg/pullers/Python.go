@@ -3,8 +3,9 @@ package pullers
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/syberalexis/automirror/configs"
-	"github.com/syberalexis/automirror/utils"
+	"github.com/syberalexis/automirror/pkg/configs"
+	"github.com/syberalexis/automirror/utils/database"
+	"github.com/syberalexis/automirror/utils/filesystem"
 	"golang.org/x/net/html"
 	"net/http"
 	"regexp"
@@ -66,7 +67,7 @@ func (p Python) readRepository(subpath string, log *log.Logger) (int, error) {
 					}
 				} else {
 					match := p.match(token.Attr[0].Val)
-					isExist, err := utils.ExistsInDatabase(p.DatabaseFile, match)
+					isExist, err := database.ExistsInDatabase(p.DatabaseFile, match)
 					if err != nil {
 						return counter, err
 					}
@@ -104,12 +105,12 @@ func (p Python) download(subpath string, url string, log *log.Logger) error {
 	if match != "" {
 		file := strings.Join([]string{p.Destination, strings.Replace(subpath, "/simple", "", 1), match}, "")
 
-		if err := utils.FileDownloader(url, file); err != nil {
+		if err := filesystem.FileDownloader(url, file); err != nil {
 			return err
 		}
 		log.Infof("%s successfully pulled !\n", file)
 
-		err := utils.InsertIntoDatabase(p.DatabaseFile, match, "true")
+		err := database.InsertIntoDatabase(p.DatabaseFile, match, "true")
 		if err != nil {
 			return err
 		}

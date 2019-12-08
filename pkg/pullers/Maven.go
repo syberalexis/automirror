@@ -4,8 +4,8 @@ import (
 	"encoding/xml"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/syberalexis/automirror/configs"
-	"github.com/syberalexis/automirror/utils"
+	"github.com/syberalexis/automirror/pkg/configs"
+	"github.com/syberalexis/automirror/utils/database"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -58,7 +58,7 @@ func (m Maven) Pull(log *log.Logger) (int, error) {
 
 		if len(metadata.Versioning.Versions) != 0 {
 			for _, version := range metadata.Versioning.Versions[0].Versions {
-				isExistInDB, err := utils.ExistsInDatabase(m.DatabaseFile, fmt.Sprintf("%s.%s:%s", artifact.Group, artifact.ID, version))
+				isExistInDB, err := database.ExistsInDatabase(m.DatabaseFile, fmt.Sprintf("%s.%s:%s", artifact.Group, artifact.ID, version))
 				if err != nil {
 					return counter, err
 				}
@@ -134,7 +134,7 @@ func (m Maven) downloadWithDependencies(group string, artifact string, version s
 		return err
 	}
 
-	return utils.InsertIntoDatabase(m.DatabaseFile, fmt.Sprintf("%s.%s:%s", group, artifact, version), "true")
+	return database.InsertIntoDatabase(m.DatabaseFile, fmt.Sprintf("%s.%s:%s", group, artifact, version), "true")
 }
 
 // Private method to read Maven Metadata File from Repo

@@ -1,13 +1,14 @@
-package main
+package core
 
 import (
 	log "github.com/sirupsen/logrus"
-	"github.com/syberalexis/automirror/both"
-	"github.com/syberalexis/automirror/configs"
-	"github.com/syberalexis/automirror/mirrors"
-	"github.com/syberalexis/automirror/pullers"
-	"github.com/syberalexis/automirror/pushers"
-	"github.com/syberalexis/automirror/utils"
+	"github.com/syberalexis/automirror/pkg/both"
+	"github.com/syberalexis/automirror/pkg/configs"
+	"github.com/syberalexis/automirror/pkg/mirrors"
+	"github.com/syberalexis/automirror/pkg/pullers"
+	"github.com/syberalexis/automirror/pkg/pushers"
+	"github.com/syberalexis/automirror/utils/filesystem"
+	"github.com/syberalexis/automirror/utils/logger"
 	"os"
 	"sync"
 )
@@ -37,7 +38,7 @@ func (a *automirror) buildMirrors() {
 				puller,
 				pusher,
 				mirror.Timer,
-				utils.LoggerInfo{
+				logger.LoggerInfo{
 					Directory: a.config.LogDir,
 					Filename:  name,
 					Format:    a.config.LogFormat,
@@ -52,7 +53,7 @@ func (a *automirror) buildMirrors() {
 func initializeLogger(config configs.TomlConfig) *os.File {
 	var file *os.File
 	if config.LogDir != "" {
-		file, err := os.OpenFile(utils.Combine(config.LogDir, "automirror.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+		file, err := os.OpenFile(filesystem.Combine(config.LogDir, "automirror.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -129,7 +130,7 @@ func main() {
 	// Logging
 	file := initializeLogger(automirror.config)
 	defer file.Close()
-	defer utils.CloseLoggers()
+	defer logger.CloseLoggers()
 
 	// Build mirrors
 	automirror.buildMirrors()
