@@ -43,6 +43,21 @@ func (m Mirror) Start() {
 	log.Infof("%s is stopped !", m.Name)
 }
 
+// Start method to initialize scheduler
+func (m Mirror) Status() {
+
+}
+
+// Start method to initialize scheduler
+func (m Mirror) Stop() {
+
+}
+
+// Start method to initialize scheduler
+func (m Mirror) Restart() {
+
+}
+
 // Run method to pull and push if not already running
 func (m Mirror) Run() {
 	if !m.IsRunning {
@@ -66,4 +81,8 @@ func (m Mirror) Run() {
 		m.logger.Infof("%s is up to date !", m.Name)
 		log.Infof("%s is up to date !", m.Name)
 	}
+}
+
+func (m Mirror) CloseLogger() {
+
 }
