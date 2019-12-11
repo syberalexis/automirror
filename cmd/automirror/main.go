@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	defaultConfigFile = "/etc/automirror/config.toml"
 	startMirrorName   string
 	statusMirrorName  string
 	stopMirrorName    string
@@ -17,17 +18,37 @@ var (
 )
 
 func main() {
-	automirror := &core.Automirror{}
+	automirror := &core.Automirror{
+		ConfigFile: defaultConfigFile,
+	}
 
 	// Globals
 	app := kingpin.New(filepath.Base(os.Args[0]), "Automirror is a software to download packages from internet into local.")
-	app.Flag("config", "Config file").Default("/etc/automirror/config.toml").Short('c').
-		Action(func(c *kingpin.ParseContext) error { automirror.Init(); return nil }).StringVar(&automirror.ConfigFile)
+	app.HelpFlag.Short('h')
+	app.Version("0.0.1")
+	app.Action(func(c *kingpin.ParseContext) error { automirror.Init(); return nil })
+
+	// Flags
+	app.Flag("config", "Config file").Default(defaultConfigFile).Short('c').StringVar(&automirror.ConfigFile)
+
+	// Start command
+	app.Command("start", "Commands to start mirrors").
+		Action(func(c *kingpin.ParseContext) error { automirror.Start(); return nil })
+
+	// Status command
+	app.Command("status", "Print Status message").
+		Action(func(c *kingpin.ParseContext) error { automirror.Status(); return nil })
+
+	// Stop command
+	app.Command("stop", "Commands to stop mirrors").
+		Action(func(c *kingpin.ParseContext) error { automirror.Stop(); return nil })
+
+	// Restart command
+	app.Command("restart", "Commands to restart mirrors").
+		Action(func(c *kingpin.ParseContext) error { automirror.Restart(); return nil })
 
 	// Mirror commands
 	mirrorCommand := app.Command("mirror", "Commands to manage a mirror")
-	app.HelpFlag.Short('h')
-	app.Version("0.0.1")
 
 	// Mirrors list
 	mirrorCommand.Command("list", "List mirrors process").

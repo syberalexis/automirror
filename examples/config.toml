@@ -1,4 +1,5 @@
 #log_dir = "/var/log/"
+log_dir = "./tmp/log/"
 #log_format = "json"
 [mirrors]
     [mirrors.maven]
@@ -9,46 +10,46 @@
 #        [mirrors.maven.pusher]
 #            name = "jfrog"
 #            config = "examples/jfrog.toml"
-    [mirrors.python]
-        timer = "24h"
-        [mirrors.python.puller]
-            name = "pip"
-            config = "examples/python.toml"
-    [mirrors.debian]
-        timer = "24h"
-        [mirrors.debian.puller]
-            name = "deb"
-            config = "examples/debian.toml"
-    [mirrors.ubuntu]
-        timer = "24h"
-        [mirrors.ubuntu.puller]
-            name = "deb"
-            config = "examples/ubuntu.toml"
-    [mirrors.apt-puppet]
-        timer = "24h"
-        [mirrors.apt-puppet.puller]
-            name = "rsync"
-            config = "examples/apt-puppet.toml"
-    [mirrors.docker]
-        timer = "24h"
-        [mirrors.docker.puller]
-            name = "docker"
-            config = "examples/docker.toml"
-    [mirrors.centos]
-        timer = "24h"
-        [mirrors.centos.puller]
-            name = "rsync"
-            config = "examples/centos.toml"
-    [mirrors.alpine]
-        timer = "24h"
-        [mirrors.alpine.puller]
-            name = "rsync"
-            config = "examples/alpine.toml"
-    [mirrors.git]
-        timer = "24h"
-        [mirrors.git.puller]
-            name = "git"
-            config = "examples/git.toml"
+#    [mirrors.python]
+#        timer = "24h"
+#        [mirrors.python.puller]
+#            name = "pip"
+#            config = "examples/python.toml"
+#    [mirrors.debian]
+#        timer = "24h"
+#        [mirrors.debian.puller]
+#            name = "deb"
+#            config = "examples/debian.toml"
+#    [mirrors.ubuntu]
+#        timer = "24h"
+#        [mirrors.ubuntu.puller]
+#            name = "deb"
+#            config = "examples/ubuntu.toml"
+#    [mirrors.apt-puppet]
+#        timer = "24h"
+#        [mirrors.apt-puppet.puller]
+#            name = "rsync"
+#            config = "examples/apt-puppet.toml"
+#    [mirrors.docker]
+#        timer = "24h"
+#        [mirrors.docker.puller]
+#            name = "docker"
+#            config = "examples/docker.toml"
+#    [mirrors.centos]
+#        timer = "24h"
+#        [mirrors.centos.puller]
+#            name = "rsync"
+#            config = "examples/centos.toml"
+#    [mirrors.alpine]
+#        timer = "24h"
+#        [mirrors.alpine.puller]
+#            name = "rsync"
+#            config = "examples/alpine.toml"
+#    [mirrors.git]
+#        timer = "24h"
+#        [mirrors.git.puller]
+#            name = "git"
+#            config = "examples/git.toml"
 # ClamAV
     [mirrors.clamav-main]
         timer = "24h"

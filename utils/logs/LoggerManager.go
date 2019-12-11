@@ -1,12 +1,10 @@
-package logger
+package logs
 
 import (
 	log "github.com/sirupsen/logrus"
 	"github.com/syberalexis/automirror/utils/filesystem"
 	"os"
 )
-
-var loggers []os.File
 
 type LoggerInfo struct {
 	Directory string
@@ -15,16 +13,19 @@ type LoggerInfo struct {
 	Level     string
 }
 
-func NewLogger(loggerInfo LoggerInfo) *log.Logger {
-	logger := log.New()
+func NewLogger(loggerInfo LoggerInfo) (file os.File, logger *log.Logger) {
+	logger = log.New()
 
 	filename := filesystem.Combine(loggerInfo.Directory, loggerInfo.Filename)
-	if filename != "" {
+	if filename != loggerInfo.Filename {
+		err := filesystem.Mkdir(loggerInfo.Directory)
+		if err != nil {
+			logger.Fatal(err)
+		}
 		file, err := os.OpenFile(filename+".log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 		if err != nil {
 			logger.Fatal(err)
 		}
-		loggers = append(loggers, *file)
 		logger.SetOutput(file)
 	}
 
@@ -42,11 +43,5 @@ func NewLogger(loggerInfo LoggerInfo) *log.Logger {
 		logger.SetLevel(level)
 	}
 
-	return logger
-}
-
-func CloseLoggers() {
-	for _, file := range loggers {
-		file.Close()
-	}
+	return
 }

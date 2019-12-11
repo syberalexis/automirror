@@ -8,26 +8,36 @@ import (
 	"github.com/syberalexis/automirror/pkg/mirrors"
 	"github.com/syberalexis/automirror/pkg/pullers"
 	"github.com/syberalexis/automirror/pkg/pushers"
-	"github.com/syberalexis/automirror/utils/filesystem"
-	"github.com/syberalexis/automirror/utils/logger"
+	"github.com/syberalexis/automirror/utils/logs"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Automirror struct {
 	ConfigFile string
 	config     configs.TomlConfig
 	mirrors    map[string]mirrors.Mirror
+	running    bool
 	waitGroup  sync.WaitGroup
-	logFile    *os.File
+	logFile    os.File
+	logger     *log.Logger
 }
 
 func (a *Automirror) Init() {
 	a.config = readConfiguration(a.ConfigFile)
 
 	// Logging
-	a.logFile = initializeLogger(a.config)
+	a.logFile, a.logger = logs.NewLogger(
+		logs.LoggerInfo{
+			Directory: a.config.LogDir,
+			Filename:  "automirror",
+			Format:    a.config.LogFormat,
+			Level:     a.config.LogLevel,
+		},
+	)
 
 	// Build mirrors
 	a.buildMirrors()
@@ -36,9 +46,8 @@ func (a *Automirror) Init() {
 func (a *Automirror) Destroy() {
 	a.logFile.Close()
 	for _, mirror := range a.mirrors {
-		mirror.CloseLogger()
+		mirror.Destroy()
 	}
-	logger.CloseLoggers()
 }
 
 func (a *Automirror) GetMirrors() error {
@@ -46,31 +55,54 @@ func (a *Automirror) GetMirrors() error {
 	for _, mirror := range a.mirrors {
 		mirrorList = append(mirrorList, mirror.Name)
 	}
-	_, err := fmt.Println("[", strings.Join(mirrorList, ","), "]")
+	_, err := fmt.Printf("[ %s ]\n", strings.Join(mirrorList, ", "))
 	return err
 }
 
 func (a *Automirror) Start() {
+	a.running = true
+
 	for name := range a.mirrors {
-		err := a.StartMirror(name)
-		if err != nil {
-			log.Fatal(err)
+		if mirror, exist := a.mirrors[name]; exist {
+			a.waitGroup.Add(1)
+			go func() {
+				runtime.LockOSThread() // Trying it
+				defer a.waitGroup.Done()
+				fmt.Printf("%d\n", os.Getpid())
+				mirror.Start()
+			}()
 		}
 	}
-	//waitGroup.Wait()
+
+	a.waitGroup.Add(1)
+	go func() {
+		timer, _ := time.ParseDuration("1s")
+		defer a.waitGroup.Done()
+		for a.running {
+			time.Sleep(timer)
+		}
+	}()
+
+	a.waitGroup.Wait()
 }
 
 func (a *Automirror) Status() {
 	for name := range a.mirrors {
 		err := a.StatusMirror(name)
 		if err != nil {
-			log.Error(err)
+			a.logger.Error(err)
 		}
 	}
 }
 
 func (a *Automirror) Stop() {
-	a.waitGroup.Done()
+	a.running = false
+	for name := range a.mirrors {
+		err := a.StopMirror(name)
+		if err != nil {
+			a.logger.Error(err)
+		}
+	}
 }
 
 func (a *Automirror) Restart() {
@@ -81,13 +113,13 @@ func (a *Automirror) Restart() {
 func (a *Automirror) StartMirror(mirrorName string) error {
 	if mirror, exist := a.mirrors[mirrorName]; exist {
 		a.waitGroup.Add(1)
-		go func(mirror mirrors.Mirror) {
+		go func() {
 			defer a.waitGroup.Done()
 			mirror.Start()
-		}(mirror)
-		a.waitGroup.Wait()
+		}()
 		return nil
 	}
+	a.waitGroup.Wait()
 	return fmt.Errorf("no mirror found with the name : %s", mirrorName)
 }
 
@@ -110,12 +142,7 @@ func (a *Automirror) StopMirror(mirrorName string) error {
 func (a *Automirror) RestartMirror(mirrorName string) error {
 	if mirror, exist := a.mirrors[mirrorName]; exist {
 		mirror.Stop()
-		a.waitGroup.Add(1)
-		go func(mirror mirrors.Mirror) {
-			defer a.waitGroup.Done()
-			mirror.Start()
-		}(mirror)
-		a.waitGroup.Wait()
+		go mirror.Start()
 		return nil
 	}
 	return fmt.Errorf("no mirror found with the name : %s", mirrorName)
@@ -134,12 +161,12 @@ func (a *Automirror) buildMirrors() {
 			pusher = engine.(pushers.Pusher)
 		}
 
-		mirrorMap[name] = mirrors.New(
+		mirrorMap[name] = mirrors.NewMirror(
 			name,
 			puller,
 			pusher,
 			mirror.Timer,
-			logger.LoggerInfo{
+			logs.LoggerInfo{
 				Directory: a.config.LogDir,
 				Filename:  name,
 				Format:    a.config.LogFormat,
@@ -148,31 +175,6 @@ func (a *Automirror) buildMirrors() {
 		)
 	}
 	a.mirrors = mirrorMap
-}
-
-func initializeLogger(config configs.TomlConfig) *os.File {
-	var file *os.File
-	if config.LogDir != "" {
-		file, err := os.OpenFile(filesystem.Combine(config.LogDir, "automirror.log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.SetOutput(file)
-	}
-	if config.LogFormat == "json" {
-		log.SetFormatter(&log.JSONFormatter{})
-	}
-	if config.LogLevel != "" {
-		var level log.Level
-		ptr := &level
-		err := ptr.UnmarshalText([]byte(config.LogLevel))
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.SetLevel(level)
-	}
-
-	return file
 }
 
 func readConfiguration(configFile string) configs.TomlConfig {
