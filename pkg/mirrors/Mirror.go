@@ -33,8 +33,8 @@ func NewMirror(name string, puller pullers.Puller, pusher pushers.Pusher, timer 
 	}
 }
 
-func (m Mirror) Destroy() {
-	m.logFile.Close()
+func (m Mirror) Destroy() error {
+	return m.logFile.Close()
 }
 
 // Start method to initialize scheduler
@@ -76,10 +76,19 @@ func (m Mirror) run() {
 	m.logger.Infof("%s is running !", m.Name)
 	m.IsRunning = true
 	if m.Puller != nil {
-		count, err := m.Puller.Pull(m.logger)
-		if err != nil {
-			m.logger.Errorf("The %s mirror stop to pull (%d elements). This is due to : %s", m.Name, count, err)
-		}
+		//counter := 0
+		//packagesInfo, err := m.Puller.GetDependencies()
+		//
+		//for _, packageInfo := range packagesInfo {
+		//
+		//}
+		//
+		//count, err := m.Puller.Pull(m.logger)
+		//if err != nil {
+		//	m.logger.Errorf("The %s mirror stop to pull (%d elements). This is due to : %s", m.Name, count, err)
+		//}
+		timer, _ := time.ParseDuration("2m")
+		time.Sleep(timer)
 	}
 	if m.Pusher != nil {
 		err := m.Pusher.Push()

@@ -11,4 +11,5 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	golang.org/x/net v0.0.0-20191109021931-daa7c04131f5
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
+	gopkg.in/yaml.v2 v2.2.2
 )

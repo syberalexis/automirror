@@ -1,4 +1,4 @@
-package pullers
+package maven
 
 import (
 	"encoding/xml"

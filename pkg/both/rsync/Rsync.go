@@ -1,4 +1,4 @@
-package both
+package rsync
 
 import (
 	log "github.com/sirupsen/logrus"

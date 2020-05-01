@@ -3,10 +3,16 @@ package core
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/syberalexis/automirror/pkg/both"
+	"github.com/syberalexis/automirror/pkg/both/docker"
+	"github.com/syberalexis/automirror/pkg/both/git"
+	"github.com/syberalexis/automirror/pkg/both/rsync"
 	"github.com/syberalexis/automirror/pkg/configs"
 	"github.com/syberalexis/automirror/pkg/mirrors"
 	"github.com/syberalexis/automirror/pkg/pullers"
+	"github.com/syberalexis/automirror/pkg/pullers/deb"
+	"github.com/syberalexis/automirror/pkg/pullers/maven"
+	"github.com/syberalexis/automirror/pkg/pullers/python"
+	"github.com/syberalexis/automirror/pkg/pullers/wget"
 	"github.com/syberalexis/automirror/pkg/pushers"
 	"github.com/syberalexis/automirror/utils/logs"
 	"os"
@@ -18,7 +24,7 @@ import (
 
 type Automirror struct {
 	ConfigFile string
-	config     configs.TomlConfig
+	config     configs.Config
 	mirrors    map[string]mirrors.Mirror
 	running    bool
 	waitGroup  sync.WaitGroup
@@ -32,10 +38,10 @@ func (a *Automirror) Init() {
 	// Logging
 	a.logFile, a.logger = logs.NewLogger(
 		logs.LoggerInfo{
-			Directory: a.config.LogDir,
+			Directory: a.config.LogConfig.Dir,
 			Filename:  "automirror",
-			Format:    a.config.LogFormat,
-			Level:     a.config.LogLevel,
+			Format:    a.config.LogConfig.Format,
+			Level:     a.config.LogConfig.Level,
 		},
 	)
 
@@ -167,18 +173,18 @@ func (a *Automirror) buildMirrors() {
 			pusher,
 			mirror.Timer,
 			logs.LoggerInfo{
-				Directory: a.config.LogDir,
+				Directory: a.config.LogConfig.Dir,
 				Filename:  name,
-				Format:    a.config.LogFormat,
-				Level:     a.config.LogLevel,
+				Format:    a.config.LogConfig.Format,
+				Level:     a.config.LogConfig.Level,
 			},
 		)
 	}
 	a.mirrors = mirrorMap
 }
 
-func readConfiguration(configFile string) configs.TomlConfig {
-	var config configs.TomlConfig
+func readConfiguration(configFile string) configs.Config {
+	var config configs.Config
 	err := configs.Parse(&config, configFile)
 	if err != nil {
 		log.Fatal(err)
@@ -192,19 +198,19 @@ func buildEngine(config configs.EngineConfig) interface{} {
 
 	switch config.Name {
 	case "deb":
-		engine, err = pullers.NewDeb(config)
+		engine, err = deb.NewDeb(config)
 	case "docker":
-		engine, err = both.NewDocker(config)
+		engine, err = docker.NewDocker(config)
 	case "git":
-		engine, err = both.NewGit(config)
+		engine, err = git.NewGit(config)
 	case "mvn":
-		engine, err = pullers.NewMaven(config)
+		engine, err = maven.NewMaven(config)
 	case "pip":
-		engine, err = pullers.NewPython(config)
+		engine, err = python.NewPython(config)
 	case "rsync":
-		engine, err = both.NewRsync(config)
+		engine, err = rsync.NewRsync(config)
 	case "wget":
-		engine, err = pullers.NewWget(config)
+		engine, err = wget.NewWget(config)
 	case "jfrog":
 		engine, err = pushers.NewJFrog(config)
 	default:

@@ -1,4 +1,4 @@
-package pullers
+package wget
 
 import (
 	log "github.com/sirupsen/logrus"

@@ -1,0 +1,10 @@
+log:
+  dir: '/tmp/log/'
+#  format: 'json'
+#  level: 'debug'
+mirrors:
+  maven:
+    timer: '24h'
+    puller:
+      name: 'maven'
+      config: 'examples/maven.toml'

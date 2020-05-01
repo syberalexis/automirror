@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	defaultConfigFile = "/etc/automirror/config.toml"
+	defaultConfigFile = "/etc/automirror/config.yaml"
 	startMirrorName   string
 	statusMirrorName  string
 	stopMirrorName    string

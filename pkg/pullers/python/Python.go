@@ -1,4 +1,4 @@
-package pullers
+package python
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ type Python struct {
 	Destination    string
 	DatabaseFile   string `toml:"database_file"`
 	FileExtensions string `toml:"file_extensions"`
-	SleepTimer     string `toml:""`
+	SleepTimer     string `toml:"sleep_timer"`
 }
 
 // NewPython method to construct Python

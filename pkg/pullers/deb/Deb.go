@@ -1,4 +1,4 @@
-package pullers
+package deb
 
 import (
 	"fmt"
@@ -60,6 +60,10 @@ func (d Deb) Pull(log *log.Logger) (int, error) {
 	}
 
 	return after - before, nil
+}
+
+func (d Deb) checkCommand() bool {
+	return true
 }
 
 // Private method to clone artifacts
