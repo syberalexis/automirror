@@ -1,10 +1,12 @@
 log:
-  dir: '/tmp/log/'
+  dir: 'tmp/log/'
 #  format: 'json'
 #  level: 'debug'
 mirrors:
-  maven:
-    timer: '24h'
-    puller:
-      name: 'maven'
-      config: 'examples/maven.toml'
+  clamav-main:
+#    timer: '10s'
+    engine:
+      name: 'wget'
+      config: 'examples/clamav-main.yaml'
+      archives:
+        - name: 'http://database.clamav.net/main.cvd'
